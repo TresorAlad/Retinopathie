@@ -1,7 +1,7 @@
 import getpass
 from sqlalchemy.orm import Session
 from app.database.connection import Base, engine, SessionLocal
-from app.models import User, Patient, Screening
+from app.models import User
 from app.core.security import hash_password
 
 def main():

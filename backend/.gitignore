@@ -5,4 +5,6 @@ __pycache__/
 .pytest_cache/
 .env
 storage/
+test_storage/
 *.db
+test_backend.db

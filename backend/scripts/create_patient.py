@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.database.connection import Base, engine, SessionLocal
-from app.models import User, Patient, Screening
+from app.models import Patient
 
 def main():
     Base.metadata.create_all(bind=engine)

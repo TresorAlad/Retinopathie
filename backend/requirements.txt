@@ -8,5 +8,3 @@ email-validator
 python-multipart
 cryptography
 Pillow
-pytest
-httpx
