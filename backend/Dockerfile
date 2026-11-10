@@ -1,34 +1,26 @@
-# Étape de build : installe les dépendances Python en wheels
-FROM python:3.12-slim AS builder
-
-WORKDIR /build
-
-RUN pip install --no-cache-dir --upgrade pip
-
-COPY requirements.txt .
-RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
-
-
-# Image d'exécution
-FROM python:3.12-slim AS runtime
+FROM python:3.12-slim
 
 WORKDIR /app
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /wheels /wheels
-RUN pip install --no-cache-dir /wheels/* \
-    && rm -rf /wheels
+COPY backend/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY scripts ./scripts
+COPY backend/app ./app
+COPY backend/scripts ./scripts
+COPY blockchain ./blockchain
 
-RUN mkdir -p /app/storage
+RUN mkdir -p /app/storage /app/blockchain_data
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+ENV BLOCKCHAIN_DATA_DIR=/app/blockchain_data
 
 EXPOSE 8000
 

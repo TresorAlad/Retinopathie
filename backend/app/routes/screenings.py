@@ -16,7 +16,12 @@ from app.models.user import User
 from app.schemas.screening import ScreeningResponse, DiagnosisUpdate
 from app.services.encryption_service import store_encrypted_image, read_encrypted_image, delete_encrypted_image
 from app.services.ai_service import analyze_retinal_image
-from app.services.blockchain_service import register_screening
+from app.services.blockchain_service import (
+    BlockchainRegistrationError,
+    merge_blockchain_status,
+    register_diagnosis_review,
+    register_screening,
+)
 
 router = APIRouter(prefix="/api/v1/screenings", tags=["Screenings"])
 ALLOWED_FORMATS = {"JPEG": "jpeg", "PNG": "png"}
@@ -73,10 +78,31 @@ async def create_screening(
         )
         db.add(screening)
         db.flush()
-        screening.blockchain_status = register_screening(screening.id, digest)
+        try:
+            birth = (
+                patient.birth_date.isoformat() if patient.birth_date else None
+            )
+            screening.blockchain_status = register_screening(
+                screening.id,
+                digest,
+                patient_id=patient.id,
+                patient_code=patient.patient_code,
+                first_name=patient.first_name,
+                last_name=patient.last_name,
+                birth_date=birth,
+            )
+        except BlockchainRegistrationError as exc:
+            db.rollback()
+            delete_encrypted_image(filename)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=str(exc),
+            ) from exc
         db.commit()
         db.refresh(screening)
         return screening
+    except HTTPException:
+        raise
     except Exception:
         db.rollback()
         delete_encrypted_image(filename)
@@ -129,14 +155,46 @@ def update_diagnosis(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_doctor),
 ):
-    screening = db.query(Screening).filter(Screening.id == screening_id).first()
+    screening = (
+        db.query(Screening)
+        .filter(Screening.id == screening_id)
+        .first()
+    )
     if screening is None:
         raise HTTPException(status_code=404, detail="Dépistage introuvable.")
+    patient = db.query(Patient).filter(Patient.id == screening.patient_id).first()
+    if patient is None:
+        raise HTTPException(status_code=404, detail="Patient introuvable.")
     screening.diagnosis = payload.diagnosis
     screening.diagnosis_note = payload.note
     screening.diagnosis_status = "reviewed"
     screening.reviewed_by_id = current_user.id
     screening.reviewed_at = datetime.now(timezone.utc)
+    try:
+        birth = (
+            patient.birth_date.isoformat() if patient.birth_date else None
+        )
+        review_status = register_diagnosis_review(
+            screening.id,
+            screening.image_sha256,
+            payload.diagnosis,
+            current_user.id,
+            patient_id=patient.id,
+            patient_code=patient.patient_code,
+            first_name=patient.first_name,
+            last_name=patient.last_name,
+            birth_date=birth,
+        )
+        screening.blockchain_status = merge_blockchain_status(
+            screening.blockchain_status,
+            review_status,
+        )
+    except BlockchainRegistrationError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
     db.commit()
     db.refresh(screening)
     return screening

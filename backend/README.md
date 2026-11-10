@@ -8,28 +8,28 @@ API FastAPI pour l'application de dépistage de la rétinopathie diabétique.
 - Patients : liste et détail.
 - Dépistages : JPEG/PNG, chiffrement Fernet, SHA-256, consultation, validation médecin.
 - PostgreSQL via SQLAlchemy.
-- Adaptateurs IA et blockchain en attente de contrat technique (résultat `pending`, blockchain `not_configured`).
+- Blockchain locale : ancrage à l'upload (`registered:<index>`) et à la validation médecin (`review:<index>`).
+- Politique stricte : si la blockchain est activée et échoue, l'opération est annulée (503).
+- Les lectures GET ne créent pas de bloc.
+- Service IA dans `ia/` : si `AI_SERVICE_URL` est défini, analyse à l'upload ; sinon `ai_status` = `pending`.
 
 ## Démarrage avec Docker (recommandé)
 
-À la racine du dossier `backend` :
+Exécute les commandes depuis le dossier **`Retinopathie/backend`** (pas l'ancien nom `diabetic-retinopathy-backend`).
+
+Créer `.env` (optionnel mais recommandé en prod) :
 
 ```bash
-cp .env.example .env
+chmod +x scripts/prepare-env.sh
+./scripts/prepare-env.sh
 ```
 
-Génère les secrets et renseigne `JWT_SECRET_KEY` et `FERNET_KEY` dans `.env` :
+Sans `.env`, Docker Compose utilise des secrets de **développement** intégrés (uniquement pour tester en local).
+
+Construire et lancer (le premier build prend quelques minutes, beaucoup moins qu'avec l'ancienne image) :
 
 ```bash
-python3 -c "import secrets; print(secrets.token_urlsafe(48))"
-python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-```
-
-Construire l'image et lancer l'API avec PostgreSQL :
-
-```bash
-docker compose build
-docker compose up -d
+docker compose up -d --build
 ```
 
 - API : http://localhost:8000
@@ -71,10 +71,14 @@ uvicorn app.main:app --reload
 
 ## Tests
 
+À la racine du dépôt (`Retinopathie/`) :
+
 ```bash
-pip install -r requirements-dev.txt
+pip install -r backend/requirements-dev.txt
 python -m pytest -q
 ```
+
+Exécute les tests API (`backend/tests`) et blockchain (`blockchain/tests`).
 
 ## Routes principales
 
@@ -90,13 +94,22 @@ python -m pytest -q
 | GET | `/api/v1/screenings/{id}/image` |
 | PATCH | `/api/v1/screenings/{id}/diagnosis` |
 | GET | `/api/v1/health` |
+| GET | `/api/v1/health/blockchain` (médecin) |
 
 Upload dépistage : `multipart/form-data` avec `patient_id` et fichier `image` (JPEG ou PNG).
+
+## Variables blockchain
+
+| Variable | Rôle |
+|----------|------|
+| `BLOCKCHAIN_ENABLED` | `true` par défaut ; `false` pour désactiver l'ancrage |
+| `BLOCKCHAIN_DATA_DIR` | Répertoire `blockchain.json` et clé AES |
+| `BLOCKCHAIN_POW_DIFFICULTY` | Difficulté PoW (2 recommandé en dev) |
 
 ## Sécurité
 
 - Ne jamais versionner `.env`, les clés ni le dossier `storage/`.
-- Les images ne sont pas stockées en base ni sur la blockchain.
+- Les images ne sont pas stockées sur la blockchain ; identité patient (code, nom, prénom) oui, chiffrée dans les blocs.
 - Prévoir Alembic, audit et stockage objet avant la production.
 
 Stades API : `no_dr`, `mild`, `moderate`, `severe`, `proliferative`.
