@@ -8,7 +8,8 @@ API FastAPI pour l'application de dépistage de la rétinopathie diabétique.
 - Patients : liste et détail.
 - Dépistages : JPEG/PNG, chiffrement Fernet, SHA-256, consultation, validation médecin.
 - PostgreSQL via SQLAlchemy.
-- Adaptateurs IA et blockchain en attente de contrat technique (résultat `pending`, blockchain `not_configured`).
+- Blockchain locale branchée : ancrage `screening_id` + hash image (statut `registered:<index>`).
+- Adaptateur IA encore en attente de contrat technique (`ai_status` = `pending`).
 
 ## Démarrage avec Docker (recommandé)
 
@@ -68,10 +69,14 @@ uvicorn app.main:app --reload
 
 ## Tests
 
+À la racine du dépôt (`Retinopathie/`) :
+
 ```bash
-pip install -r requirements-dev.txt
+pip install -r backend/requirements-dev.txt
 python -m pytest -q
 ```
+
+Exécute les tests API (`backend/tests`) et blockchain (`blockchain/tests`).
 
 ## Routes principales
 
