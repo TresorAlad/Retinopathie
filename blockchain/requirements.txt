@@ -1,0 +1,2 @@
+# Dépendances pour la blockchain privée
+cryptography>=41.0.0
