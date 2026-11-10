@@ -3,8 +3,8 @@ Tests unitaires pour le module block.py
 """
 
 import pytest
-from block import Block
-from utils import compute_sha256
+from blockchain.block import Block
+from blockchain.utils import compute_sha256
 
 
 class TestBlockCreation:

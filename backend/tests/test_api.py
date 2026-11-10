@@ -49,7 +49,7 @@ def test_screening_upload_read_image_and_diagnosis(client):
     screening = upload.json()
     screening_id = screening["id"]
     assert screening["ai_status"] == "pending"  # IA réelle non branchée à ce stade.
-    assert screening["blockchain_status"] == "not_configured"
+    assert screening["blockchain_status"].startswith("registered:")
 
     listed = client.get("/api/v1/screenings", headers=headers)
     assert listed.status_code == 200

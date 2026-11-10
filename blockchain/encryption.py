@@ -16,12 +16,7 @@ from typing import Dict, Any, Tuple
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.exceptions import InvalidTag
 
-from config import (
-    AES_KEY_SIZE,
-    AES_NONCE_SIZE,
-    ENCRYPTION_KEY_FILE,
-    JSON_ENCODING,
-)
+from .config import AES_KEY_SIZE, AES_NONCE_SIZE, JSON_ENCODING, get_encryption_key_file
 
 
 def generate_aes_key() -> bytes:
@@ -45,7 +40,7 @@ def save_key(key: bytes, filepath: str = None) -> None:
     Raises:
         IOError: Si l'écriture échoue
     """
-    path = filepath or ENCRYPTION_KEY_FILE
+    path = filepath or str(get_encryption_key_file())
     try:
         with open(path, "wb") as f:
             f.write(key)
@@ -70,7 +65,7 @@ def load_key(filepath: str = None) -> bytes:
         ValueError: Si la clé a une taille incorrecte
         IOError: Si la lecture échoue
     """
-    path = filepath or ENCRYPTION_KEY_FILE
+    path = filepath or str(get_encryption_key_file())
 
     if not os.path.exists(path):
         raise FileNotFoundError(f"Fichier de clé introuvable: {path}")
@@ -101,7 +96,7 @@ def get_or_create_key(filepath: str = None) -> bytes:
     Returns:
         bytes: Clé AES de 16 octets
     """
-    path = filepath or ENCRYPTION_KEY_FILE
+    path = filepath or str(get_encryption_key_file())
 
     if os.path.exists(path):
         return load_key(path)

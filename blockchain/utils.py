@@ -12,7 +12,7 @@ import json
 from typing import Any, Dict
 from datetime import datetime
 
-from config import JSON_ENCODING
+from .config import JSON_ENCODING
 
 
 def deterministic_json(obj: Any) -> str:

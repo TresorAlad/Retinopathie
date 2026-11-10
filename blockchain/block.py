@@ -13,12 +13,8 @@ Chaque bloc contient :
 from dataclasses import dataclass, asdict
 from typing import Dict, Any, Optional
 
-from utils import (
-    compute_block_hash,
-    current_timestamp,
-    deterministic_json,
-)
-from config import POW_DIFFICULTY
+from .utils import compute_block_hash, current_timestamp, deterministic_json
+from .config import get_pow_difficulty
 
 
 @dataclass
@@ -67,8 +63,13 @@ class Block:
         )
 
     @classmethod
-    def create_block(cls, index: int, data: Dict[str, Any],
-                     previous_hash: str, difficulty: int = POW_DIFFICULTY) -> "Block":
+    def create_block(
+        cls,
+        index: int,
+        data: Dict[str, Any],
+        previous_hash: str,
+        difficulty: int | None = None,
+    ) -> "Block":
         """
         Crée un nouveau bloc avec Proof of Work.
 
@@ -81,9 +82,10 @@ class Block:
         Returns:
             Block: Nouveau bloc miné
         """
+        resolved_difficulty = difficulty if difficulty is not None else get_pow_difficulty()
         timestamp = current_timestamp()
         nonce = 0
-        target_prefix = "0" * difficulty
+        target_prefix = "0" * resolved_difficulty
 
         # Proof of Work : trouver un nonce produisant un hash valide
         while True:
@@ -115,7 +117,7 @@ class Block:
         )
         return computed_hash == self.hash
 
-    def verify_pow(self, difficulty: int = POW_DIFFICULTY) -> bool:
+    def verify_pow(self, difficulty: int | None = None) -> bool:
         """
         Vérifie que le Proof of Work est valide.
 
@@ -125,7 +127,8 @@ class Block:
         Returns:
             bool: True si le hash commence par le bon nombre de zéros
         """
-        return self.hash.startswith("0" * difficulty)
+        resolved_difficulty = difficulty if difficulty is not None else get_pow_difficulty()
+        return self.hash.startswith("0" * resolved_difficulty)
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -158,7 +161,7 @@ class Block:
 
     def display(self) -> None:
         """Affiche les informations du bloc dans le terminal."""
-        from utils import format_block_display, print_header
+        from .utils import format_block_display, print_header
         print_header(f"Bloc #{self.index}")
         print(format_block_display(self.to_dict()))
         print(f"  Intégrité    : {'OK' if self.verify_integrity() else 'ÉCHEC'}")

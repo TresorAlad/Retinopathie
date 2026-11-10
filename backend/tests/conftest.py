@@ -1,13 +1,22 @@
 import os
+import sys
+import tempfile
 from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
-# Variables de test définies avant l'import des modules applicatifs.
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 os.environ["DATABASE_URL"] = "sqlite:///./test_backend.db"
 os.environ["JWT_SECRET_KEY"] = "test-only-secret-key-not-for-production"
 os.environ["FERNET_KEY"] = "2z5Yj4f3cQxg9dV6s8W1mK0pR7tN3aB5cE2hG6jL9uA="
 os.environ["STORAGE_DIR"] = "test_storage"
+os.environ["BLOCKCHAIN_DATA_DIR"] = tempfile.mkdtemp(prefix="api_blockchain_")
+os.environ["BLOCKCHAIN_POW_DIFFICULTY"] = "2"
+os.environ["BLOCKCHAIN_ENABLED"] = "true"
 
 from app.main import app
 from app.database.connection import Base, engine, SessionLocal
@@ -16,6 +25,9 @@ from app.models import User, Patient
 
 @pytest.fixture()
 def client():
+    from app.services import blockchain_service
+
+    blockchain_service._chain = None
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()

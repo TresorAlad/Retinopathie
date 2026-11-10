@@ -14,14 +14,14 @@ import threading
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 
-from config import BLOCKCHAIN_FILE, POW_DIFFICULTY
-from block import Block
-from utils import (
-    deterministic_json,
+from .config import get_blockchain_file, get_pow_difficulty
+from .block import Block
+from .utils import (
     compute_sha256,
+    deterministic_json,
+    print_error,
     print_info,
     print_success,
-    print_error,
     print_warning,
 )
 
@@ -36,8 +36,11 @@ class Blockchain:
         _lock: Verrou pour thread-safety
     """
 
-    def __init__(self, difficulty: int = POW_DIFFICULTY,
-                 filepath: Optional[Path] = None):
+    def __init__(
+        self,
+        difficulty: int | None = None,
+        filepath: Optional[Path] = None,
+    ):
         """
         Initialise la blockchain.
 
@@ -46,8 +49,8 @@ class Blockchain:
             filepath: Chemin du fichier de persistance (défaut: config.BLOCKCHAIN_FILE)
         """
         self.chain: List[Block] = []
-        self.difficulty = difficulty
-        self.filepath = filepath or BLOCKCHAIN_FILE
+        self.difficulty = difficulty if difficulty is not None else get_pow_difficulty()
+        self.filepath = filepath or get_blockchain_file()
         self._lock = threading.Lock()
 
         # Charger ou créer la chaîne
@@ -204,7 +207,7 @@ class Blockchain:
 
     def display_chain(self) -> None:
         """Affiche tous les blocs de la chaîne dans le terminal."""
-        from utils import print_header
+        from .utils import print_header
         print_header(f"Blockchain ({len(self.chain)} blocs)")
         for block in self.chain:
             block.display()

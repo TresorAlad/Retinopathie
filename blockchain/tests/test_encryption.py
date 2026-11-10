@@ -5,13 +5,13 @@ Tests unitaires pour le module encryption.py
 import pytest
 import os
 import tempfile
-from encryption import (
-    generate_aes_key,
-    save_key,
-    load_key,
-    get_or_create_key,
-    encrypt_data,
+from blockchain.encryption import (
     decrypt_data,
+    encrypt_data,
+    generate_aes_key,
+    get_or_create_key,
+    load_key,
+    save_key,
 )
 from cryptography.exceptions import InvalidTag
 

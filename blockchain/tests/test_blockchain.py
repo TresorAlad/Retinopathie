@@ -9,8 +9,8 @@ import json
 from pathlib import Path
 
 from blockchain import Blockchain
-from block import Block
-from encryption import generate_aes_key, encrypt_data
+from blockchain.block import Block
+from blockchain.encryption import encrypt_data, generate_aes_key
 
 
 class TestBlockchainInitialization:

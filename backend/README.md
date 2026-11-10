@@ -12,24 +12,21 @@ API FastAPI pour l'application de dépistage de la rétinopathie diabétique.
 
 ## Démarrage avec Docker (recommandé)
 
-À la racine du dossier `backend` :
+Exécute les commandes depuis le dossier **`Retinopathie/backend`** (pas l'ancien nom `diabetic-retinopathy-backend`).
+
+Créer `.env` (optionnel mais recommandé en prod) :
 
 ```bash
-cp .env.example .env
+chmod +x scripts/prepare-env.sh
+./scripts/prepare-env.sh
 ```
 
-Génère les secrets et renseigne `JWT_SECRET_KEY` et `FERNET_KEY` dans `.env` :
+Sans `.env`, Docker Compose utilise des secrets de **développement** intégrés (uniquement pour tester en local).
+
+Construire et lancer (le premier build prend quelques minutes, beaucoup moins qu'avec l'ancienne image) :
 
 ```bash
-python3 -c "import secrets; print(secrets.token_urlsafe(48))"
-python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-```
-
-Construire l'image et lancer l'API avec PostgreSQL :
-
-```bash
-docker compose build
-docker compose up -d
+docker compose up -d --build
 ```
 
 - API : http://localhost:8000
