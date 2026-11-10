@@ -79,7 +79,18 @@ async def create_screening(
         db.add(screening)
         db.flush()
         try:
-            screening.blockchain_status = register_screening(screening.id, digest)
+            birth = (
+                patient.birth_date.isoformat() if patient.birth_date else None
+            )
+            screening.blockchain_status = register_screening(
+                screening.id,
+                digest,
+                patient_id=patient.id,
+                patient_code=patient.patient_code,
+                first_name=patient.first_name,
+                last_name=patient.last_name,
+                birth_date=birth,
+            )
         except BlockchainRegistrationError as exc:
             db.rollback()
             delete_encrypted_image(filename)
@@ -144,20 +155,35 @@ def update_diagnosis(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_doctor),
 ):
-    screening = db.query(Screening).filter(Screening.id == screening_id).first()
+    screening = (
+        db.query(Screening)
+        .filter(Screening.id == screening_id)
+        .first()
+    )
     if screening is None:
         raise HTTPException(status_code=404, detail="Dépistage introuvable.")
+    patient = db.query(Patient).filter(Patient.id == screening.patient_id).first()
+    if patient is None:
+        raise HTTPException(status_code=404, detail="Patient introuvable.")
     screening.diagnosis = payload.diagnosis
     screening.diagnosis_note = payload.note
     screening.diagnosis_status = "reviewed"
     screening.reviewed_by_id = current_user.id
     screening.reviewed_at = datetime.now(timezone.utc)
     try:
+        birth = (
+            patient.birth_date.isoformat() if patient.birth_date else None
+        )
         review_status = register_diagnosis_review(
             screening.id,
             screening.image_sha256,
             payload.diagnosis,
             current_user.id,
+            patient_id=patient.id,
+            patient_code=patient.patient_code,
+            first_name=patient.first_name,
+            last_name=patient.last_name,
+            birth_date=birth,
         )
         screening.blockchain_status = merge_blockchain_status(
             screening.blockchain_status,

@@ -68,6 +68,22 @@ def _get_chain():
     return _chain
 
 
+def patient_blockchain_fields(
+    patient_id: int,
+    patient_code: str,
+    first_name: str,
+    last_name: str,
+    birth_date: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "patient_id": patient_id,
+        "patient_code": patient_code,
+        "first_name": first_name,
+        "last_name": last_name,
+        "birth_date": birth_date,
+    }
+
+
 def _add_encrypted_payload(payload: dict[str, Any]) -> int:
     _ensure_blockchain_path()
     from blockchain.encryption import encrypt_data, get_or_create_key
@@ -78,9 +94,45 @@ def _add_encrypted_payload(payload: dict[str, Any]) -> int:
     return block.index
 
 
-def register_screening(screening_id: int, image_sha256: str) -> str:
+def register_patient_record(
+    patient_id: int,
+    patient_code: str,
+    first_name: str,
+    last_name: str,
+    birth_date: str | None = None,
+) -> str:
+    if not is_blockchain_enabled():
+        return "not_configured"
+
+    try:
+        block_index = _add_encrypted_payload(
+            {
+                "type": "patient_record",
+                **patient_blockchain_fields(
+                    patient_id, patient_code, first_name, last_name, birth_date
+                ),
+            }
+        )
+        return f"patient:{block_index}"
+    except Exception as exc:
+        logger.exception("Échec ancrage patient patient_id=%s", patient_id)
+        raise BlockchainRegistrationError(
+            "Impossible d'enregistrer le patient sur la blockchain."
+        ) from exc
+
+
+def register_screening(
+    screening_id: int,
+    image_sha256: str,
+    *,
+    patient_id: int,
+    patient_code: str,
+    first_name: str,
+    last_name: str,
+    birth_date: str | None = None,
+) -> str:
     '''
-    Ancre screening_id + hash image. Lève BlockchainRegistrationError si activé et échec.
+    Ancre dépistage, hash image et identité patient (chiffré). Lève si activé et échec.
     '''
     if not is_blockchain_enabled():
         return "not_configured"
@@ -91,6 +143,9 @@ def register_screening(screening_id: int, image_sha256: str) -> str:
                 "type": "screening_anchor",
                 "screening_id": screening_id,
                 "image_sha256": image_sha256,
+                **patient_blockchain_fields(
+                    patient_id, patient_code, first_name, last_name, birth_date
+                ),
             }
         )
         return f"registered:{block_index}"
@@ -104,6 +159,12 @@ def register_diagnosis_review(
     image_sha256: str,
     diagnosis: str,
     reviewed_by_id: int,
+    *,
+    patient_id: int,
+    patient_code: str,
+    first_name: str,
+    last_name: str,
+    birth_date: str | None = None,
 ) -> str:
     if not is_blockchain_enabled():
         return "not_configured"
@@ -120,6 +181,9 @@ def register_diagnosis_review(
                 "diagnosis": diagnosis,
                 "reviewed_by_id": reviewed_by_id,
                 "review_digest": digest,
+                **patient_blockchain_fields(
+                    patient_id, patient_code, first_name, last_name, birth_date
+                ),
             }
         )
         return f"review:{block_index}"
@@ -167,6 +231,24 @@ def get_blockchain_health() -> BlockchainHealth:
             length=None,
             last_block_index=None,
         )
+
+
+def find_patient_record(patient_id: int) -> dict[str, Any] | None:
+    _ensure_blockchain_path()
+    from blockchain.encryption import decrypt_data, get_or_create_key
+
+    key = get_or_create_key()
+    chain = _get_chain()
+    for block in reversed(chain.chain):
+        if block.index == 0:
+            continue
+        try:
+            data = decrypt_data(block.data, key)
+        except Exception:
+            continue
+        if data.get("type") == "patient_record" and data.get("patient_id") == patient_id:
+            return data
+    return None
 
 
 def find_anchor_block(screening_id: int, anchor_type: str = "screening_anchor") -> dict[str, Any] | None:

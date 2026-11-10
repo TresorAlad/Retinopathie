@@ -6,8 +6,27 @@ from unittest.mock import patch
 
 from PIL import Image
 
-from app.services.blockchain_service import find_anchor_block, validate_chain_integrity
+from app.services.blockchain_service import (
+    find_anchor_block,
+    find_patient_record,
+    register_patient_record,
+    reset_chain_for_tests,
+    validate_chain_integrity,
+)
 from tests.test_api import make_png, token_for
+
+
+def test_patient_record_anchor():
+    import tempfile
+
+    reset_chain_for_tests()
+    os.environ["BLOCKCHAIN_DATA_DIR"] = tempfile.mkdtemp(prefix="patient_chain_")
+    status = register_patient_record(99, "PAT-XYZ", "Jean", "Dupont", "1990-01-01")
+    assert status.startswith("patient:")
+    record = find_patient_record(99)
+    assert record is not None
+    assert record["patient_code"] == "PAT-XYZ"
+    assert record["first_name"] == "Jean"
 
 
 def test_e2e_anchor_in_blockchain_file(client):
@@ -33,7 +52,9 @@ def test_e2e_anchor_in_blockchain_file(client):
     anchor = find_anchor_block(screening_id, "screening_anchor")
     assert anchor is not None
     assert anchor["image_sha256"] == image_sha256
-    assert "patient_id" not in anchor
+    assert anchor["patient_code"] == "PAT-001"
+    assert anchor["first_name"] == "Awa"
+    assert anchor["last_name"] == "Test"
     assert validate_chain_integrity() is True
 
 

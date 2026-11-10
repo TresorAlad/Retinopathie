@@ -170,7 +170,8 @@ python -m pytest tests/test_blockchain.py -v
 
 Le backend appelle [`backend/app/services/blockchain_service.py`](../backend/app/services/blockchain_service.py) :
 
-- **POST dépistage** : ancrage `screening_anchor` avec `screening_id` + `image_sha256` uniquement.
+- **Création patient** (script) : bloc `patient_record` (code, prénom, nom, date de naissance).
+- **POST dépistage** : ancrage `screening_anchor` avec `screening_id`, `image_sha256` et identité patient.
 - **PATCH diagnostic** : ancrage `diagnosis_review` (stade, hash image, identifiant médecin).
 - **GET** : ne modifie jamais la chaîne.
 - Si `BLOCKCHAIN_ENABLED=true` et échec d'ancrage : le dépistage est annulé (politique stricte).
@@ -183,7 +184,7 @@ Variables utiles : `BLOCKCHAIN_DATA_DIR`, `BLOCKCHAIN_POW_DIFFICULTY` (ex. `2` e
 - **Nonce** : 12 octets aléatoires uniques par chiffrement (GCM)
 - **Authentification** : Tag GCM vérifié automatiquement au déchiffrement
 - **Intégrité** : SHA-256 sur tous les champs du bloc + liaison previous_hash
-- **Aucune donnée personnelle dans les blocs** : pas de nom patient, pas d'image (uniquement IDs techniques et hash)
+- **Données patient** : code, prénom, nom (et date de naissance si connue) chiffrés dans les blocs concernés ; pas d'image.
 
 ## Fichiers de données
 

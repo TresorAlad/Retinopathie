@@ -109,7 +109,7 @@ Upload dépistage : `multipart/form-data` avec `patient_id` et fichier `image` (
 ## Sécurité
 
 - Ne jamais versionner `.env`, les clés ni le dossier `storage/`.
-- Les images ne sont pas stockées en base ni sur la blockchain.
+- Les images ne sont pas stockées sur la blockchain ; identité patient (code, nom, prénom) oui, chiffrée dans les blocs.
 - Prévoir Alembic, audit et stockage objet avant la production.
 
 Stades API : `no_dr`, `mild`, `moderate`, `severe`, `proliferative`.
