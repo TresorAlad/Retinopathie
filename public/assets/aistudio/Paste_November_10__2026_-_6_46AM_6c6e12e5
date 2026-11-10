@@ -1,0 +1,826 @@
+# PROMPT DE DÉVELOPPEMENT — Application mobile Flutter « Dépiste Retino »
+
+> **Destinataire :** Google AI Studio
+> **Pièces jointes à fournir avec ce fichier :** `code.html` (maquette Stitch v2), `screen.png` (capture de la maquette), `DESIGN.md` (système de design Stitch).
+> **Nature du document :** cahier des charges exécutable. Tout ce dont tu as besoin est ici. Tu exécutes, tu ne décides de rien.
+
+---
+
+## 0. Règles d'exécution (à lire en premier)
+
+1. **Tu es un développeur mobile Flutter senior.** Tu exécutes ce cahier des charges à la lettre.
+2. **Tu ne prends aucune décision de spécification.** Tu n'ajoutes rien, tu ne retires rien, tu n'interprètes pas.
+3. **Cas non couvert :** si une situation n'est vraiment pas couverte par ce document, applique la solution la plus simple compatible avec les sections 3 et 9, puis note-la dans le fichier `docs/HYPOTHESES.md` (une ligne : situation → solution appliquée). N'écris jamais cette décision ailleurs et ne pose pas de question.
+4. **Aucun fichier incomplet.** Interdits : `...`, « reste du code identique », « à compléter », sauf les marqueurs `TODO(API)` explicitement prévus en section 10.
+5. **Tu n'exécutes pas le code.** Écris du Dart 3 null-safe correct. Vérifie chaque import, chaque signature d'API de package, chaque type. Utilise les API **non dépréciées** de la version de Flutter indiquée en section 1.
+6. **Langues :** textes de l'interface en **français** ; identifiants (classes, variables, fichiers) en **anglais** ; **commentaires de code en français** ; documentation en **français**.
+7. **Version de Flutter :** le code est écrit pour **Flutter 3.47.9 / Dart 3.13.7** (section 1). Cette version est peut-être plus récente que tes connaissances : en cas de doute sur une API de Flutter ou d'un package, utilise la signature la plus récente que tu connais avec certitude et note le point dans `docs/HYPOTHESES.md`.
+8. **Livraison :** respecte la section 15 (ordre des lots, format des fichiers).
+
+---
+
+## 1. Environnement imposé
+
+| Paramètre | Valeur imposée |
+|---|---|
+| Nom affiché de l'application | **Dépiste Retino** |
+| Nom du package Dart | `depiste_retino` |
+| Identifiant Android (`applicationId`) et iOS (bundle id) | `com.max.app` |
+| Version de Flutter | **Flutter 3.47.9** (canal stable, révision `c197ca5199`, du 2026-10-29) — **Dart 3.13.7** — DevTools 2.60.0 |
+| Contrainte SDK dans `pubspec.yaml` | `environment: sdk: ^3.13.7` |
+| Plateformes | Android **et** iOS (test réel sur un téléphone Android physique) |
+| Orientation | Portrait uniquement (verrouillée en Dart **et** dans les fichiers natifs) |
+| Thème | Clair uniquement (aucun mode sombre) |
+| Langue | Français uniquement (aucune internationalisation) |
+| SDK minimal Android | Le plus bas possible : `flutter.minSdkVersion`, relevé uniquement si un plugin de la section 4 l'exige (dans ce cas, la plus petite valeur exigée) ; indiquer la valeur finale dans le README |
+| SDK minimal iOS | Valeur par défaut du modèle Flutter, relevée uniquement si un plugin l'exige ; indiquer la valeur finale dans le README |
+| Contexte | Projet scolaire : pas de publication sur les stores, pas de signature de release |
+| Icône d'application | Aucune personnalisation (icône Flutter par défaut) |
+| Écran de démarrage | Aucune personnalisation (par défaut) |
+| Poste du développeur principal | Ubuntu (Linux). Les commandes du README sont en shell Linux/macOS ; ajouter l'équivalent PowerShell seulement quand il diffère |
+| Appareil de test | Téléphone Android physique branché en USB (débogage USB) |
+
+---
+
+## 2. Priorité des sources et écarts maquette ↔ cahier des charges
+
+### 2.1 Règles de priorité (ordre décroissant)
+
+1. **Ce document** (priorité absolue).
+2. **La maquette** (`code.html` + `screen.png`) : référence **au pixel près** pour tout ce que ce document ne contredit pas.
+3. **`DESIGN.md`** : utilisé **uniquement** pour concevoir les éléments absents de la maquette (section 2.3) ; en cas de divergence avec `code.html`, **`code.html` fait foi**.
+
+### 2.2 Trois règles d'arbitrage
+
+- **A.** Un élément demandé par ce document mais **absent** de la maquette → **il est ajouté**.
+- **B.** Un élément que ce document dit de **supprimer** mais **présent** dans la maquette → **il n'existe pas** dans l'application.
+- **C.** Un élément **présent dans la maquette** et sur lequel ce document **ne dit rien** → **il existe, identique à la maquette**.
+
+### 2.3 Résolution détaillée (déjà arbitrée — applique sans discuter)
+
+**Éléments de la maquette modifiés ou supprimés**
+
+| Élément de la maquette | Décision |
+|---|---|
+| Nom « ClarEye » dans l'en-tête | Remplacé par **« Dépiste Retino »** |
+| Logo image (`<img>`) dans l'en-tête | **Supprimé** (aucun logo, aucune icône) : l'en-tête ne contient que le texte « Dépiste Retino » |
+| Bouton « Choisir depuis la galerie » | **Supprimé** |
+| Badge « Position stable détectée » dans le viseur | **Supprimé** (aucune détection ni contrôle de qualité) |
+| Fond simulé du viseur (dégradé gris) | Remplacé par l'**aperçu caméra réel** (le dégradé ne sert que de fond de secours, voir 8.5) |
+| Photo d'exemple de la carte « Cliché instantané » | Remplacée par la **vraie photo capturée** |
+| Titre « Diagnostic général : Tout semble équilibré » | **Supprimé** |
+| Badge « Rassurant » | **Supprimé** |
+| Les 4 pastilles de résultat (« Clarté sclérale saine… », etc.) et leur séparateur | **Supprimés** |
+| Paragraphe de résultat écrit en dur | Remplacé par le **bloc de texte renvoyé par l'API** |
+| Horodatage « Aujourd'hui à 14:32 » | Remplacé par l'**heure réelle de réception** de la réponse |
+| Script JavaScript de simulation | Remplacé par la vraie logique (section 9) |
+
+**Éléments ajoutés (absents de la maquette)**
+
+| Élément ajouté | Où |
+|---|---|
+| Bouton **flash/torche** et bouton **changer de caméra** | Dans le viseur (8.5) |
+| État **permission caméra refusée** avec bouton pour redemander l'accès | Dans le viseur (8.5) |
+| **Messages d'erreur de champ** (champs obligatoires) | Sous chaque champ (8.4) |
+| **Bannière d'erreur** (« Pas de connexion », « Serveur indisponible », délai dépassé) | Entre l'aperçu et les résultats (8.10) |
+| **Bloc d'avertissement médical** (texte identique à la version précédente de la maquette, **sans** bouton) | Bas de page (8.9) |
+| États du bouton **Analyser** (envoi en cours, terminé) | Carte « Cliché instantané » (8.6) |
+
+**Tout le reste de la maquette est conservé à l'identique** (règle C), y compris : badges « Dépistage bienveillant » et « IA Santé v2.4 », badge « Confidentiel », badge « Lumière naturelle », texte d'instruction « Placez vos yeux face à l'objectif… », carte de chargement avec ses deux étapes, libellé « Bilan global unifié », icône `verified`, ligne cadenas « Résultat enregistré en toute sécurité… ».
+
+---
+
+## 3. Périmètre fonctionnel
+
+### 3.1 Ce que fait l'application
+
+1. Affiche **une seule page** défilante (aucune navigation entre écrans).
+2. Demande à l'utilisateur de renseigner **4 champs obligatoires** : Nom, Prénom, Âge, Sexe.
+3. Affiche un **viseur caméra en direct** guidant le cadrage des **deux yeux sur une seule photo**.
+4. Permet de **choisir la caméra** (avant/arrière) et d'**activer le flash/torche**.
+5. Capture **une photo** au format **PNG**, l'affiche en aperçu, permet de la **reprendre**.
+6. **Envoie en JSON** (4 champs + photo) à une **API externe** et attend la réponse (max 60 secondes).
+7. Affiche la **réponse de l'API** : un seul bloc de texte.
+8. Gère 3 erreurs : pas de connexion, serveur indisponible, délai dépassé.
+
+### 3.2 Ce que l'application ne fait PAS (ne rien implémenter de tout cela)
+
+- Aucune blockchain, aucun portefeuille, aucun code web3 (tout est géré par l'API).
+- Aucun compte, inscription, connexion, profil.
+- Aucun historique ; **aucun stockage local** (pas de base de données, pas de `shared_preferences`, pas de fichiers conservés).
+- Aucune sélection depuis la galerie.
+- Aucun contrôle de qualité de la photo, aucun score, aucune détection en temps réel, aucun pourcentage de progression.
+- Aucun mode sombre, aucune autre langue.
+- Aucun écran de consentement, aucune gestion RGPD, aucun verrouillage (PIN/biométrie).
+- Aucun partage ni export de résultat.
+- Aucune annulation d'une analyse en cours.
+- Aucun bouton « Consulter un professionnel de santé », aucun bouton « info », aucun avatar.
+- Aucun logo image, aucune icône d'application personnalisée, aucun écran de démarrage personnalisé.
+- Aucun test unitaire ni test de widget.
+- Aucun mode simulé (mock) de l'API.
+- Aucune notification ni rappel.
+
+---
+
+## 4. Dépendances autorisées (et seulement celles-ci)
+
+| Package | Rôle |
+|---|---|
+| `camera` | Aperçu en direct, capture, flash/torche, changement de caméra |
+| `permission_handler` | Demander/redemander l'accès caméra, ouvrir les réglages |
+| `image` | Conversion de la photo en **PNG** + correction d'orientation |
+| `http` | Requête HTTP POST JSON |
+| `connectivity_plus` | Distinguer « Pas de connexion » de « Serveur indisponible » |
+| `provider` | Gestion d'état (`ChangeNotifier`) |
+| `google_fonts` | Police **Plus Jakarta Sans** (poids 400, 500, 600, 700) |
+| `material_symbols_icons` | Icônes **Material Symbols Outlined** de la maquette |
+| `flutter_lints` (dev) | Règles d'analyse statique |
+
+Règles :
+- **Aucun autre package.**
+- Dans `pubspec.yaml`, déclare chaque dépendance **sans numéro de version inventé** (utilise `any`). Écris le code pour les versions **stables les plus récentes** que tu connais avec certitude.
+- Le README doit expliquer qu'après le premier `flutter pub get`, le fichier `pubspec.lock` doit être **versionné** (commit) pour figer les versions de l'équipe.
+
+---
+
+## 5. Architecture et arborescence
+
+**Principe :** une seule feature `screening`, organisée en 3 couches (`data`, `logic`, `ui`). Les widgets d'interface ne contiennent **aucune logique métier**. L'état est géré par **un seul** `ChangeNotifier` (`ScreeningController`) fourni via `provider`.
+
+```
+depiste_retino/
+├─ pubspec.yaml
+├─ analysis_options.yaml
+├─ README.md
+├─ docs/
+│  ├─ ARCHITECTURE.md
+│  ├─ SPECIFICATIONS.md
+│  ├─ API_INTEGRATION.md
+│  ├─ DESIGN_SYSTEM.md
+│  ├─ CONTRIBUTING.md
+│  ├─ TESTS_MANUELS.md
+│  ├─ DECISIONS.md
+│  └─ HYPOTHESES.md
+├─ android/   (fichiers natifs à modifier : voir section 12)
+├─ ios/       (fichiers natifs à modifier : voir section 12)
+└─ lib/
+   ├─ main.dart                         # orientation portrait, barre système, Provider, runApp
+   ├─ app.dart                          # MaterialApp : thème clair, textScaler borné
+   ├─ core/
+   │  ├─ config/api_config.dart         # URL, chemin, en-têtes, clé de réponse (section 10)
+   │  ├─ constants/app_strings.dart     # TOUS les textes français
+   │  ├─ constants/app_dimens.dart      # rayons, espacements, tailles
+   │  ├─ theme/app_colors.dart          # couleurs (section 6)
+   │  ├─ theme/app_text_styles.dart     # styles de texte (section 6)
+   │  ├─ theme/app_shadows.dart         # ombres (section 6)
+   │  ├─ theme/app_theme.dart           # ThemeData clair
+   │  └─ utils/
+   │     ├─ validators.dart             # validation des 4 champs
+   │     ├─ image_utils.dart            # conversion PNG (dans un isolate) + base64
+   │     ├─ time_format.dart            # « Aujourd'hui à HH:mm »
+   │     └─ scroll_utils.dart           # défilement vers un bloc en tenant compte de l'en-tête fixe
+   └─ features/screening/
+      ├─ data/
+      │  ├─ models/screening_request.dart   # 4 champs + photo → JSON
+      │  ├─ models/screening_result.dart    # texte + heure de réception
+      │  ├─ screening_error.dart            # enum : noConnection, serverUnavailable, timeout
+      │  └─ screening_api_service.dart      # appel HTTP, timeout, mapping des erreurs
+      ├─ logic/
+      │  ├─ camera_manager.dart             # permission, init, bascule, flash, capture, cycle de vie
+      │  └─ screening_controller.dart       # état de la page + actions
+      └─ ui/
+         ├─ screening_page.dart             # assemble les blocs, gère le défilement
+         └─ widgets/
+            ├─ common/
+            │  ├─ app_card.dart            # carte blanche (rayon 32, ombre)
+            │  ├─ pill_button.dart         # bouton pilule (Reprendre / Analyser)
+            │  ├─ pressable_scale.dart     # effet « active:scale »
+            │  ├─ status_badge.dart        # petites pilules (badges)
+            │  ├─ pulse_animations.dart    # pulse, ping, spin
+            │  └─ inner_shadow.dart        # ombre interne
+            ├─ app_header.dart
+            ├─ intro_section.dart
+            ├─ patient_info_card.dart
+            ├─ pill_text_field.dart        # champ texte pilule + variante liste déroulante
+            ├─ capture_card.dart
+            ├─ viewfinder.dart             # aperçu + masque + boutons flash/bascule
+            ├─ viewfinder_overlay_painter.dart
+            ├─ camera_control_button.dart
+            ├─ camera_permission_view.dart
+            ├─ shutter_button.dart
+            ├─ preview_card.dart
+            ├─ loading_card.dart
+            ├─ error_banner.dart
+            ├─ results_section.dart
+            └─ disclaimer_card.dart
+```
+
+---
+
+## 6. Design tokens (à reproduire dans `core/theme/`)
+
+### 6.1 Couleurs — `AppColors` (valeurs exactes de la maquette)
+
+| Nom | Hex | Nom | Hex |
+|---|---|---|---|
+| `surface` / `background` / `surfaceBright` | `#FFF8F5` | `onSurface` / `onBackground` | `#1D1B19` |
+| `surfaceDim` | `#DFD9D6` | `onSurfaceVariant` | `#53433F` |
+| `surfaceContainerLowest` | `#FFFFFF` | `outline` | `#86736E` |
+| `surfaceContainerLow` | `#F9F2EF` | `outlineVariant` | `#D8C2BC` |
+| `surfaceContainer` | `#F3EDE9` | `inverseSurface` | `#33302E` |
+| `surfaceContainerHigh` | `#EDE7E4` | `inverseOnSurface` | `#F6EFEC` |
+| `surfaceContainerHighest` / `surfaceVariant` | `#E8E1DE` | `primary` / `surfaceTint` | `#8D4D3B` |
+| `onPrimary` | `#FFFFFF` | `primaryContainer` | `#F4A38C` |
+| `onPrimaryContainer` | `#713726` | `primaryFixed` / `primaryFixedDim` | `#FFDBD1` / `#FFB5A0` |
+| `onPrimaryFixed` / `onPrimaryFixedVariant` | `#380C02` / `#703625` | `inversePrimary` | `#FFB5A0` |
+| `secondary` | `#406749` | `secondaryContainer` | `#BFEAC5` |
+| `onSecondary` | `#FFFFFF` | `onSecondaryContainer` | `#446B4D` |
+| `secondaryFixed` / `secondaryFixedDim` | `#C1EDC8` / `#A6D1AD` | `onSecondaryFixed` / `onSecondaryFixedVariant` | `#00210C` / `#284F33` |
+| `tertiary` | `#815508` | `tertiaryContainer` | `#E5AD5C` |
+| `onTertiary` | `#FFFFFF` | `onTertiaryContainer` | `#644100` |
+| `tertiaryFixed` / `tertiaryFixedDim` | `#FFDDB3` / `#F6BC6A` | `onTertiaryFixed` / `onTertiaryFixedVariant` | `#291800` / `#633F00` |
+| `error` | `#BA1A1A` | `errorContainer` | `#FFDAD6` |
+| `onError` | `#FFFFFF` | `onErrorContainer` | `#93000A` |
+
+### 6.2 Couleurs avec transparence (valeurs ARGB précalculées — à déclarer en `const`, ne pas recalculer à l'exécution)
+
+| Nom | Valeur | Usage |
+|---|---|---|
+| `headerBg` | `0xCCFFF8F5` | fond de l'en-tête (surface à 80 %) |
+| `headerShadow` | `0x0A000000` | ombre de l'en-tête |
+| `cardShadow` | `0x0F3D3A38` | ombre des cartes (rgba 61,58,56 à 6 %) |
+| `inputBorder` | `0x99EDE7E4` | bordure des champs (surfaceContainerHigh à 60 %) |
+| `inputHint` | `0x9953433F` | texte d'indication (onSurfaceVariant à 60 %) |
+| `focusRing` | `0x4D8D4D3B` | anneau de focus (primary à 30 %) |
+| `viewerScrim` | `0x381D1B19` | masque sombre autour du cadre (rgba 29,27,25 à 22 %) |
+| `viewerGradTop` / `viewerGradMid` / `viewerGradBottom` | `0x66DFD9D6` / `0x33F3EDE9` / `0x80DFD9D6` | dégradé de secours du viseur |
+| `whiteStrokeDashed` | `0xD9FFFFFF` | cercles pointillés (blanc à 85 %) |
+| `whiteStrokeSolid` | `0xE6FFFFFF` | cercles pleins (blanc à 90 %) |
+| `whiteStrokeSoft` | `0x99FFFFFF` | repère du nez (blanc à 60 %) |
+| `controlBg` | `0xD933302E` | fond des boutons flash/bascule (inverseSurface à 85 %) |
+| `ringPing` | `0x66F4A38C` | anneau pulsant de l'obturateur (primaryContainer à 40 %) |
+| `shutterShadow` | `0x8CF4A38C` | ombre de l'obturateur (à 55 %) |
+| `analyzeShadow` | `0x66F4A38C` | ombre du bouton Analyser (à 40 %) |
+| `photoGradBottom` / `photoGradMid` | `0xCC33302E` / `0x4D33302E` | bas de la photo (inverseSurface à 80 % / 30 %) |
+| `shadowMd` | `0x1A000000` | ombre « md » Tailwind (noir à 10 %) |
+| `shadowSm` / `shadowInner` | `0x0D000000` | ombres « sm » et interne (noir à 5 %) |
+
+### 6.3 Typographie — Plus Jakarta Sans (via `google_fonts`)
+
+`TextStyle.height = lineHeight / fontSize` ; `letterSpacing = em × fontSize` ; toujours `leadingDistribution: TextLeadingDistribution.even`.
+
+| Style | Taille | Interligne | Poids | Espacement des lettres |
+|---|---|---|---|---|
+| `headlineLgMobile` | 26 | 34 | 700 | −0,015 em |
+| `headlineMd` | 22 | 30 | 600 | −0,01 em |
+| `headlineSm` | 18 | 26 | 600 | 0 |
+| `labelLg` | 16 | 22 | 600 | 0 |
+| `labelMd` | 14 | 20 | 600 | 0 |
+| `labelSm` | 12 | 16 | 700 | +0,02 em |
+| `bodyMd` | 15 | 23 | 400 | 0 |
+| `bodySm` | 13 | 19 | 500 | 0 |
+
+**Surcharges de la maquette (le CSS Tailwind fait foi)** : un utilitaire `font-bold` / `font-semibold` / `font-medium` remplace le poids du style (700 / 600 / 500) ; un utilitaire `tracking-tight` (−0,025 em) ou `tracking-wide` (+0,025 em) remplace l'espacement du style. Chaque cas est précisé dans la section 8.
+
+### 6.4 Rayons, espacements, ombres
+
+**Rayons** (attention : la configuration Tailwind de la maquette **redéfinit** certains rayons) :
+
+| Classe Tailwind | Valeur réelle |
+|---|---|
+| `rounded-lg` | **32 px** (cartes) |
+| `rounded-xl` | **48 px** (appliqué à des éléments de moins de 96 px de haut : rendu **pilule**, rayon effectif = moitié de la hauteur) |
+| `rounded-2xl` | **16 px** |
+| `rounded-full` | 9999 px (cercle / pilule) |
+
+**Espacement :** 1 unité Tailwind = 4 px. `px-margin` = 20 px. `gap-space-sm` = 12 px.
+
+**Ombres** (Flutter : `blurRadius` = flou CSS ; `spreadRadius` = étalement CSS) :
+
+| Nom | Définition |
+|---|---|
+| `card` | `0 4 20 −2` couleur `cardShadow` |
+| `header` | `0 1 8 0` couleur `headerShadow` |
+| `md` | `0 4 6 −1` + `0 2 4 −2`, couleur `shadowMd` |
+| `sm` | `0 1 2 0` couleur `shadowSm` |
+| `shutter` | `0 8 24 0` couleur `shutterShadow` |
+| `analyze` | `0 6 20 0` couleur `analyzeShadow` |
+| `inner` (ombre **interne**) | `inset 0 2 4 0` couleur `shadowInner` (dessinée avec `inner_shadow.dart` : clip du rectangle arrondi + chemin extérieur flouté) |
+
+---
+
+## 7. Règles de conversion Tailwind → Flutter
+
+- Largeur du contenu = largeur de l'écran − 40 px (marges de 20 px). **Largeur maximale du contenu : 480 px, centré.**
+- `space-y-N` / `gap-N` → `SizedBox` de N × 4 px. `min-h-[Npx]` → hauteur minimale N.
+- `text-[Npx]` appliqué à une icône → `Icon(size: N)`.
+- Toutes les icônes : `Icon(Symbols.nom, size: N, weight: 400, grade: 0, opticalSize: 24, fill: 0)` (`fill: 1` seulement là où la maquette l'indique : `spa` et `verified`). La couleur est celle du texte parent (`currentColor`) sauf indication contraire.
+- `backdrop-blur-xl` = flou 24 ; `backdrop-blur-md` = 12 ; `backdrop-blur-[2px]` = 2 → `BackdropFilter(ImageFilter.blur(sigmaX: N, sigmaY: N))` avec `ClipRect`/`ClipRRect`.
+- `active:scale-[0.98]` → composant `PressableScale` : échelle 0,98 pendant l'appui, transition 150 ms (`active:scale-95` de l'obturateur : 0,95).
+- `animate-pulse` : opacité 1 → 0,5 → 1, durée 2 s, courbe `Cubic(0.4, 0, 0.6, 1)`, en boucle.
+- `animate-ping` : voir 8.5 (obturateur).
+- `animate-spin` : rotation 360° en 1 s, linéaire, en boucle.
+- Aucun effet d'ondulation Material (`InkWell`) : utiliser `GestureDetector` + `PressableScale`.
+- **Réduction des animations :** si `MediaQuery.disableAnimationsOf(context)` est vrai, aucune animation en boucle (pulse, ping, spin) n'est jouée (états figés à leur valeur de départ).
+- Barre système : transparente, icônes sombres (`SystemUiOverlayStyle` : `statusBarColor` transparent, `statusBarIconBrightness: Brightness.dark`, `statusBarBrightness: Brightness.light`), affichage bord à bord.
+
+---
+
+## 8. Spécification visuelle de la page (de haut en bas)
+
+### 8.0 Structure générale
+
+- `Scaffold` fond `surface`. Corps = `Stack` : (1) contenu défilant, (2) en-tête fixe au-dessus.
+- Contenu défilant : `SingleChildScrollView` (physique par défaut), padding haut = `64 + hauteur de la zone de statut`, horizontal 20, bas = `32 + zone de sécurité basse`. Colonne avec **24 px** entre les blocs.
+- **Ordre des blocs :** intro → carte « Vos informations » → carte de capture → carte « Cliché instantané » *(si photo)* → carte de chargement **ou** bannière d'erreur *(selon l'état)* → section résultats *(si résultat)* → bloc d'avertissement (toujours visible).
+- Le clavier ne doit jamais masquer le champ en cours de saisie.
+
+### 8.1 En-tête fixe (`app_header.dart`)
+
+- Hauteur 64 + zone de statut ; fond `headerBg` + flou 24 ; ombre `header`.
+- Contenu : padding horizontal 20, aligné à gauche et centré verticalement : texte **« Dépiste Retino »**, `headlineSm`, poids 700, espacement −0,025 em, couleur `onSurface`. **Rien d'autre** (pas de logo, pas d'icône, pas de bouton).
+
+### 8.2 Introduction (`intro_section.dart`)
+
+Colonne, haut 8, espacement 8.
+- **Ligne de badges** (espacement 8) :
+  - Badge 1 : fond `secondaryContainer`, texte `onSecondaryContainer`, `labelSm`, padding H12 V4, pilule, icône `spa` 15 (`fill: 1`) + 6 px + « Dépistage bienveillant ».
+  - Badge 2 : fond `surfaceContainerHigh`, texte `onSurfaceVariant`, `labelSm`, padding H10 V4, pilule, pastille ronde 6×6 `secondary` + 4 px + « IA Santé v2.4 ».
+- **Titre** : « Un petit contrôle de vos yeux, en quelques secondes. » — `headlineLgMobile`, poids 700, espacement −0,025 em, `onSurface`.
+- **Paragraphe** : « Positionnez confortablement votre regard. Nous veillons sur la clarté et la vitalité de vos yeux en une seule prise bienveillante. » — `bodyMd`, `onSurfaceVariant`.
+
+### 8.3 Composant `AppCard`
+
+Fond `surfaceContainerLowest`, rayon **32**, padding **20**, ombre `card`. (Le bloc d'avertissement 8.9 et les résultats 8.8 ont leurs propres rayons.)
+
+### 8.4 Carte « Vos informations » (`patient_info_card.dart`, `pill_text_field.dart`)
+
+`AppCard`, colonne, espacement 16.
+
+- **Ligne d'en-tête** (espace entre les deux côtés) :
+  - Gauche (espacement 10) : cercle 32 `primaryFixed` avec icône `badge` 18 couleur `primary` ; puis colonne : « **Vos informations** » (`labelLg`, poids 700, `onSurface`) et « Nécessaire pour calibrer l'analyse » (`bodySm`, `onSurfaceVariant`).
+  - Droite : badge « Confidentiel » — fond `surfaceContainer`, texte `onSurfaceVariant`, `labelSm`, padding H10 V4, pilule, icône `lock` 14 couleur `secondary` + 4 px.
+- **Champs** : colonne avec padding haut 4, espacement **12** entre champs. Chaque champ = libellé + 6 px + contrôle.
+  - **Libellé** : `labelSm` poids **600**, couleur `onSurface`.
+  - **Contrôle** : hauteur minimale **52**, padding horizontal 16, rayon effectif **26** (pilule), fond `surfaceContainerLow`, bordure 1 px `inputBorder`, texte `bodyMd` `onSurface`, indication (`hint`) couleur `inputHint`. **Focus :** pas de changement de bordure ; anneau extérieur de 2 px couleur `focusRing` (`BoxShadow` avec `spreadRadius: 2`, sans flou). Curseur couleur `onSurface`.
+  - **Nom** — libellé « Nom », indication « Dupont », clavier texte, majuscule à chaque mot, action « suivant ».
+  - **Prénom** — libellé « Prénom », indication « Camille », clavier texte, majuscule à chaque mot, action « suivant ».
+  - **Âge** — libellé « Âge », indication « 34 ans », clavier numérique, chiffres uniquement, 3 caractères maximum, action « suivant ».
+  - **Sexe** — libellé « Sexe », liste déroulante : indication « Sélectionner... » (3 points ASCII), options **« Femme »** (valeur `femme`), **« Homme »** (valeur `homme`), **« Autre / Non précisé »** (valeur `autre`). Même apparence que les champs ; padding droit 40 ; icône `expand_more` 20 couleur `onSurfaceVariant`, positionnée à 12 px du bord droit, non interactive. Le menu déroulant : fond `surfaceContainerLowest`, rayon 16, texte `bodyMd` `onSurface`.
+- **Erreur de champ** (ajout) : quand un champ est invalide, sa bordure passe à 1,5 px `error` et un message `bodySm` couleur `error` apparaît 6 px sous le champ. Textes en section 11. L'erreur disparaît dès que l'utilisateur modifie ce champ.
+
+### 8.5 Carte de capture (`capture_card.dart`, `viewfinder.dart`, …)
+
+`AppCard` (avec découpe aux bords arrondis `Clip.antiAlias`), colonne centrée.
+
+**a) En-tête** (largeur totale, espace entre les deux côtés, marge basse 12) :
+- Gauche (espacement 8) : cercle 32 `primaryFixed`, icône `photo_camera` 18 `primary` ; texte « **Viseur guidé simultané** » `labelMd` poids 600 `onSurface`.
+- Droite : badge « Lumière naturelle » — fond `surfaceContainer`, texte `onSurfaceVariant`, `labelSm`, padding H10 V4, pilule, icône `wb_sunny` 15 couleur `tertiary` + 4 px.
+
+**b) Viseur** : largeur totale, `AspectRatio 4/3`, rayon 16, fond `surfaceContainer`, découpé (`clip`), ombre interne `inner`. Quatre couches :
+1. **Aperçu caméra en direct**, recadré « cover » (remplit le cadre, sans déformation ; échanger largeur/hauteur de `previewSize` en portrait). **Si l'aperçu n'est pas disponible** (initialisation, permission refusée, erreur) : dégradé vertical `viewerGradTop` → `viewerGradMid` → `viewerGradBottom`.
+2. **Masque** : couleur `viewerScrim` sur tout le viseur **sauf** l'intérieur de la pilule (le masque est un chemin rectangle moins pilule : `Path.combine(PathOperation.difference, …)`).
+3. **Pilule-guide** : largeur 88 % du viseur, hauteur 144, centrée, rayon 72. Dans la pilule, dessiner avec un `CustomPainter` (`viewfinder_overlay_painter.dart`) le schéma suivant, défini dans un repère de **290 × 144**, mis à l'échelle `s = min(largeurPilule/290, 144/144)` et centré dans la pilule :
+   - Rectangle arrondi : `x=6, y=14, largeur=278, hauteur=116, rayon=58` ; trait `#F4A38C`, épaisseur 2,5, **pointillé 6 / 6**, extrémités arrondies, sans remplissage ; **opacité animée en `pulse`**.
+   - **Œil gauche**, centre (82, 72) : cercle rayon 32, trait `whiteStrokeDashed` épaisseur 1,5 pointillé 4 / 4 ; cercle rayon 12, trait `whiteStrokeSolid` épaisseur 1,5 ; disque plein blanc rayon 2,5.
+   - **Œil droit**, centre (208, 72) : mêmes trois éléments.
+   - **Repère du nez** : trait vertical de (145, 60) à (145, 84) et trait horizontal de (141, 72) à (149, 72), couleur `whiteStrokeSoft`, épaisseur 1,5, extrémités arrondies.
+   - Pointillés : implémentés avec `PathMetric.extractPath` (longueur du trait puis du vide).
+4. **Texte central** (au centre de la pilule), colonne centrée, padding H16 V8, avec flou d'arrière-plan 2 : icône `visibility` 26 couleur `surfaceBright` avec ombre portée (`0 4 3` noir à 7 % + `0 2 2` noir à 6 %) ; puis, 2 px plus bas, « **Positionnez vos deux yeux dans le cadre** » — `labelSm` poids 700, espacement +0,025 em, couleur `surfaceBright`, ombre `0 1 1` noir à 5 %, centré.
+
+**c) Boutons du viseur (ajout)** — `camera_control_button.dart` :
+- Forme : cercle visuel 44 (fond `controlBg`, ombre `sm`, icône 22 couleur `inverseOnSurface`), zone tactile 56 × 56 centrée sur le cercle.
+- **Flash** : en haut à gauche du viseur (12 px du haut et de la gauche). Icône `flash_on` quand activé, `flash_off` quand désactivé. Étiquette d'accessibilité : « Activer le flash » / « Désactiver le flash ». **Affiché seulement si la caméra active est la caméra arrière.**
+- **Changer de caméra** : en haut à droite (12 px du haut et de la droite). Icône `cameraswitch`. Étiquette : « Changer de caméra ». **Affiché seulement si l'appareil a au moins 2 caméras.**
+
+**d) État « permission refusée » (ajout)** — `camera_permission_view.dart`, affiché **à la place** de la pilule-guide, des boutons et du texte central, sur le dégradé de secours : colonne centrée, padding H24 : icône `no_photography` 32 `onSurfaceVariant` ; texte `bodySm` `onSurfaceVariant` centré (texte en section 11) ; 12 px ; bouton pilule de hauteur 56, fond `primaryContainer`, texte `labelLg` poids 700 `onPrimaryContainer`, padding H24, libellé « Autoriser la caméra » (ou « Ouvrir les réglages » si la permission est refusée définitivement).
+Même mise en page pour l'état « aucune caméra / erreur caméra » (message en section 11, sans bouton).
+
+**e) Ligne d'instruction** (marge haute 14, largeur totale) : fond `surfaceContainerLow`, rayon effectif pilule (rayon 48 plafonné à la moitié de la hauteur), padding H12 V8, espacement 10 ; cercle 28 `tertiaryFixed` avec icône `light_mode` 16 `onTertiaryFixed` ; texte « Placez vos yeux face à l'objectif, à environ 30 cm, dans un endroit bien éclairé. » (`bodySm`, `onSurfaceVariant`).
+
+**f) Bloc obturateur** (marge haute 20, marge basse 8, centré, colonne) — `shutter_button.dart` :
+- **Anneau pulsant** : cercle 96, couleur `ringPing`, centré sur le bouton, décoratif (ignore les touches), **non découpé par le bloc** mais **découpé par les bords de la carte** ; dessiné **au-dessus** de la ligne d'instruction (comme dans la maquette). Animation `ping` de 1 s en boucle : de 0 % à 75 % de la durée, échelle 1 → 2 et opacité 0,75 → 0 avec la courbe `Cubic(0, 0, 0.2, 1)` ; de 75 % à 100 %, échelle 2 et opacité 0.
+- **Bouton** : cercle 80 fond `primaryContainer`, ombre `shutter` ; cercle intérieur 64 fond `surfaceContainerLowest` (fond `primaryFixed` pendant l'appui) avec ombre interne `inner`, icône `photo_camera` 32 couleur `primary`. Appui : échelle 0,95 ; au déclenchement : échelle 0,90 pendant 150 ms. Étiquette d'accessibilité : « Prendre la photo ».
+- **Libellé** 8 px sous le bouton : « Appuyer pour capturer » — `labelSm` poids 500, `onSurfaceVariant`.
+- **États :** pendant la capture/conversion, l'icône du cercle intérieur est remplacée par un `CircularProgressIndicator` (28 px, épaisseur 3, couleur `primary`). Quand la caméra n'est pas prête, ou pendant l'envoi : bouton **désactivé** (opacité 0,5, touches ignorées) ; l'anneau pulsant n'est alors pas affiché.
+
+### 8.6 Carte « Cliché instantané » (`preview_card.dart`) — visible seulement si une photo existe
+
+`AppCard`, colonne, espacement 16.
+- **En-tête** (espace entre les deux côtés) : gauche = pastille ronde 10 `secondary` + 8 px + « Cliché instantané » (`headlineSm`, poids 600, `onSurface`) ; droite = badge « Prêt pour l'analyse » — fond `secondaryFixed`, texte `onSecondaryFixedVariant`, `labelSm`, padding H12 V4, pilule, icône `check_circle` 14 + 4 px.
+- **Photo** : largeur totale, `AspectRatio 16/10`, hauteur maximale 288, rayon 16, découpée, fond `surfaceContainer`, ombre `md`, `Image.memory` en `BoxFit.cover` (`gaplessPlayback: true`). **Dégradé de bas de photo** : bande de 24 px de haut collée en bas, de bas en haut `photoGradBottom` → `photoGradMid` → transparent. Aucun texte sur la photo.
+- **Actions** : colonne, padding haut 4, espacement 12, deux boutons pilule (largeur totale, hauteur minimale 56, espacement icône-texte 8, `labelLg`, effet `PressableScale`) :
+  1. **Reprendre** — fond `surfaceContainerHigh`, texte/icône `onSurface`, icône `replay` 20.
+  2. **Analyser** — fond `primaryContainer`, texte/icône `onPrimaryContainer`, poids **700**, ombre `analyze`, icône `arrow_forward` 20 après le texte.
+- **États du bouton Analyser :**
+  - *Normal* : « Analyser » + `arrow_forward`.
+  - *Envoi en cours* : icône `sync` 20 en rotation (`spin`) + « Analyse... » (3 points ASCII) ; touches ignorées. Le bouton Reprendre est alors à l'opacité 0,5 et ses touches sont ignorées.
+  - *Terminé* (après un résultat reçu) : « Analyse terminée » + icône `done` 20 ; touches ignorées. Il redevient « Analyser » dès qu'une nouvelle photo est capturée **ou** que l'un des 4 champs est modifié.
+
+### 8.7 Carte de chargement (`loading_card.dart`) — visible seulement pendant l'envoi
+
+`AppCard`, colonne centrée, espacement 16.
+- **Titre** : ligne centrée (espacement 10, padding V4) : pastille ronde 10 `primary` en `pulse` + « Analyse en cours… » (`headlineSm`, poids 600, `onSurface`).
+- **Boîte des étapes** : largeur totale, fond `surfaceContainerLow`, rayon 16, padding 16, colonne alignée à gauche, espacement 12.
+  - Étape 1 : cercle 28 `secondaryContainer` (marge haute 2) avec icône `check` 16 `secondary` ; espacement 12 ; titre « Clarté sclérale bilatérale » (`labelMd`, poids 600, `onSurface`) ; sous-titre « Recherche d'indices pigmentaires ou jaunâtres sur les deux yeux. » (`bodySm`, `onSurfaceVariant`).
+  - Étape 2 : cercle 28 `primaryFixed` en `pulse` avec icône `radiology` 16 `primary` ; titre « Reflets et réseau vasculaire » ; sous-titre « Évaluation simultanée de la pâleur et de la fatigue conjonctivale. ».
+- **Note** : « Synthèse et unification des marqueurs bilatéraux… Élaboration de votre bilan global. » — `bodySm`, `onSurfaceVariant`, *italique*, centrée.
+- Contenu **statique** : ni pourcentage, ni barre de progression.
+
+### 8.8 Section résultats (`results_section.dart`) — visible seulement si une réponse a été reçue
+
+Colonne, espacement 16, **aucune animation d'apparition** (le bloc apparaît simplement).
+- **Ligne de titre** (espace entre les deux côtés) : gauche = icône `troubleshoot` 24 `primary` + 8 px + « Résultats de l'analyse » (`headlineMd`, poids 700, `onSurface`) ; droite = heure de réception (`labelSm`, `onSurfaceVariant`), format section 9.8.
+- **Carte de résultat** : fond `surfaceContainerLowest`, rayon **16**, padding 20, ombre `card`, colonne, espacement 16 :
+  - Ligne (espacement 12, centrée verticalement) : cercle 44 `secondaryContainer` avec icône `verified` 26 (`fill: 1`) `secondary` ; texte « BILAN GLOBAL UNIFIÉ » (écrit en capitales dans le code), `labelSm`, poids 700, espacement +0,025 em, couleur `secondary`.
+  - **Bloc de texte de l'API** : `bodyMd`, couleur `onSurfaceVariant`, interligne 1,625 (soit 24,375 px), affiché tel quel (retours à la ligne conservés), sans mise en forme Markdown.
+- **Ligne de réassurance** (centrée, espacement 8, padding H12 V8) : icône `lock` 18 `secondary` ; texte `bodySm` `onSurfaceVariant` centré : « **Résultat enregistré en toute sécurité.** Données médicales chiffrées de bout en bout sur votre appareil. » (la première phrase en poids 600 couleur `onSurface`).
+
+### 8.9 Bloc d'avertissement (`disclaimer_card.dart`) — toujours visible, en bas de page
+
+Conteneur fond `surfaceContainerLow`, rayon 16, padding 20, ligne alignée en haut, espacement 12 : cercle 24 `surfaceContainerHigh` (marge haute 2) avec icône `info` 16 `onSurfaceVariant` ; texte `bodySm`, `onSurfaceVariant`, interligne 1,625 : « Ce résultat est une aide au dépistage et ne remplace pas un avis médical. En cas de doute, d'irritation persistante ou de gêne visuelle, parlez-en à votre ophtalmologue ou médecin traitant. » **Aucun bouton.**
+
+### 8.10 Bannière d'erreur (`error_banner.dart`) — ajout
+
+Remplace la carte de chargement à sa place. Conteneur fond `errorContainer`, rayon 16, padding 16, ligne centrée verticalement, espacement 12 : icône 24 couleur `onErrorContainer` (`wifi_off` pour « Pas de connexion », `cloud_off` pour « Serveur indisponible », `schedule` pour le délai dépassé) ; texte `labelLg` poids 700 couleur `onErrorContainer` (textes en section 11). Aucune animation, aucun bouton de fermeture.
+
+---
+
+## 9. Comportement
+
+### 9.1 État de la page (`ScreeningController`, `ChangeNotifier`)
+
+| Donnée | Type | Rôle |
+|---|---|---|
+| contrôleurs Nom / Prénom / Âge | `TextEditingController` | saisie |
+| `sexe` | `String?` | `femme` / `homme` / `autre` / `null` |
+| `fieldErrors` | `Map` champ → message | erreurs de validation |
+| `photoBytes` | `Uint8List?` | photo PNG **en mémoire uniquement** |
+| `isCapturing` | `bool` | capture/conversion en cours |
+| `isSending` | `bool` | envoi en cours |
+| `isDone` | `bool` | un résultat a été reçu pour les données actuelles |
+| `result` | `ScreeningResult?` | texte + heure de réception |
+| `error` | `ScreeningError?` | `noConnection`, `serverUnavailable`, `timeout` |
+| `camera` | `CameraManager` | caméra (voir 9.2) |
+| `scrollRequests` | `Stream<ScrollTarget>` | demandes de défilement vers `capture`, `preview`, `loading`, `results`, `firstInvalidField` |
+
+### 9.2 Caméra (`CameraManager`)
+
+1. **Au démarrage de la page :** vérifier `Permission.camera.status` ; si non accordée → la demander ; si accordée → initialiser ; sinon état « refusé ».
+2. **Caméra initiale :** la caméra **avant** si elle existe, sinon la première caméra disponible.
+3. **Réglages du `CameraController` :** `ResolutionPreset.veryHigh`, `enableAudio: false`, orientation de capture verrouillée en portrait (`lockCaptureOrientation(DeviceOrientation.portraitUp)`).
+4. **Changer de caméra :** libérer le contrôleur courant, créer et initialiser celui de l'autre objectif ; flash remis à « désactivé » ; ignorer les appuis pendant la bascule.
+5. **Flash :** bascule entre `FlashMode.off` et `FlashMode.torch`. Si `setFlashMode` lève une exception, revenir silencieusement à « désactivé » et masquer le bouton.
+6. **Cycle de vie (`WidgetsBindingObserver`) :** à `inactive`/`paused` → libérer le contrôleur ; à `resumed` → revérifier la permission puis réinitialiser (cela couvre le retour des réglages système).
+7. **Permission refusée :** l'état « refusé » désactive l'obturateur et affiche la vue 8.5-d. Le bouton **« Autoriser la caméra »** redemande l'accès ; si `isPermanentlyDenied`, le bouton devient **« Ouvrir les réglages »** (`openAppSettings()`).
+8. **Aucune caméra / échec d'initialisation :** état « erreur caméra » (vue 8.5-d sans bouton).
+9. **Libération :** `dispose()` du contrôleur quand la page est détruite.
+
+### 9.3 Capture
+
+1. Ignorer si la caméra n'est pas prête, si `isCapturing`, ou si `isSending`.
+2. `isCapturing = true`. Prendre la photo (`takePicture`).
+3. Lire les octets du fichier, puis **supprimer immédiatement le fichier temporaire** (`File(path).delete()`, dans un `try/catch` silencieux).
+4. Convertir en **PNG** dans un isolate (`compute`) : décoder, corriger l'orientation (`bakeOrientation`), encoder en PNG. **Aucune rotation, aucun recadrage, aucun miroir** en dehors de la correction d'orientation.
+5. `photoBytes` = octets PNG. **Rien n'est jamais écrit sur le disque.** `error = null`, `isDone = false`. `isCapturing = false`.
+6. Demande de défilement vers l'aperçu (alignement centré). Le résultat précédent **reste affiché** jusqu'au prochain envoi.
+7. Si la capture échoue : `isCapturing = false`, aucun message, aucune photo.
+
+### 9.4 Reprendre
+
+`photoBytes = null`, `isDone = false`, `error = null` ; la carte d'aperçu disparaît ; défilement vers la carte de capture (alignement en haut). Le résultat précédent reste affiché.
+
+### 9.5 Validation (au clic sur « Analyser »)
+
+Règles :
+- **Nom**, **Prénom** : obligatoires (non vides après suppression des espaces de début et de fin) ; 60 caractères maximum.
+- **Âge** : obligatoire ; entier entre **1 et 120**.
+- **Sexe** : obligatoire (une option choisie).
+- **Photo** : toujours présente à ce stade (le bouton Analyser n'existe que si `photoBytes != null`).
+
+Si au moins un champ est invalide : afficher les messages sous **tous** les champs invalides, **ne rien envoyer**, défiler vers le **premier** champ invalide (en tenant compte de l'en-tête fixe).
+
+### 9.6 Envoi
+
+1. Validation OK → `result = null` (l'ancien résultat disparaît), `error = null`, `isSending = true`, `isDone = false`. Défilement vers la carte de chargement (visible au minimum).
+2. Vérifier la connectivité : si `connectivity_plus` indique uniquement `none` → `error = noConnection`, aucune requête.
+3. Sinon, appeler `ScreeningApiService.analyze(request)` (section 10) avec un **délai maximal de 60 secondes** pour l'ensemble de la requête.
+4. **Succès** (statut HTTP 2xx et texte présent) : `result = ScreeningResult(texte, DateTime.now())`, `isDone = true`, `isSending = false`. Défilement vers le haut de la section résultats (alignement en haut).
+5. **Erreurs** (`isSending = false`) :
+   - `TimeoutException` → `error = timeout` **et** `photoBytes = null` (l'utilisateur doit reprendre la photo) ; défilement vers la carte de capture.
+   - Exception réseau (`SocketException`, `http.ClientException`, `HandshakeException`, `HttpException`) → revérifier la connectivité : `none` → `noConnection`, sinon `serverUnavailable`.
+   - Statut HTTP hors 2xx, corps non JSON, clé de réponse absente ou vide → `serverUnavailable`.
+   - Après `noConnection` ou `serverUnavailable`, la photo est **conservée** : l'utilisateur peut cliquer de nouveau sur « Analyser » ou « Reprendre ».
+6. Il n'existe **aucun moyen d'annuler** un envoi en cours.
+
+### 9.7 Défilement automatique (`scroll_utils.dart`)
+
+Le défilement doit tenir compte de l'en-tête fixe (hauteur 64 + zone de statut) : position cible = position du bloc − hauteur de l'en-tête − 8 px. Durée 400 ms, courbe `Curves.easeInOut`. Déclencheurs : capture réussie → aperçu (centré) ; début d'envoi → chargement (au minimum visible) ; résultat reçu → résultats (en haut) ; « Reprendre » ou délai dépassé → carte de capture (en haut) ; validation échouée → premier champ invalide (en haut).
+
+### 9.8 Heure de réception (`time_format.dart`)
+
+Si la réception est le même jour que l'heure actuelle : « Aujourd'hui à HH:mm » (24 h, heure locale du téléphone, zéros initiaux). Sinon : « jj/MM à HH:mm ». Formatage écrit à la main (sans package `intl`).
+
+### 9.9 Accessibilité (réglages simples)
+
+- Chaque bouton et chaque icône interactive a une étiquette `Semantics` en français ; les icônes décoratives et animations sont exclues (`ExcludeSemantics`).
+- Zones tactiles ≥ 56 px pour les boutons principaux (voir 8) ; couleurs conformes aux tokens.
+- Taille du texte système respectée **bornée entre 1,0 et 1,3** (`MediaQuery.textScaler` borné dans `app.dart`).
+- Orientation portrait verrouillée.
+
+---
+
+## 10. API d'analyse (emplacement préparé — l'URL et la documentation ne sont pas encore connues)
+
+L'API **existe déjà** ; son URL, sa documentation et son mode d'accès **seront fournis plus tard**. L'application **ne simule rien** : elle appelle l'API réelle. Tu prépares uniquement l'emplacement, avec des valeurs provisoires marquées `TODO(API)`.
+
+### 10.1 `core/config/api_config.dart` (contenu imposé)
+
+```dart
+/// Configuration de l'API d'analyse. Toutes les valeurs à ajuster sont ici.
+abstract final class ApiConfig {
+  // TODO(API): URL de base fournie plus tard. Surchargeable avec --dart-define=API_BASE_URL=...
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://api.example.invalid', // domaine réservé : ne se résout jamais
+  );
+
+  // TODO(API): chemin de l'endpoint d'analyse.
+  static const String analyzePath = '/analyze';
+
+  // TODO(API): clé d'accès (méthode d'authentification inconnue). Vide = aucun en-tête d'authentification.
+  static const String apiKey = String.fromEnvironment('API_KEY', defaultValue: '');
+  static const String authHeaderName = 'Authorization'; // TODO(API)
+  static const String authHeaderPrefix = 'Bearer ';     // TODO(API)
+
+  // TODO(API): nom du champ JSON contenant le texte de la réponse.
+  static const String responseTextKey = 'resultat';
+
+  /// Délai maximal pour l'ensemble de la requête (imposé par le cahier des charges).
+  static const Duration timeout = Duration(seconds: 60);
+}
+```
+
+Ajoute dans la classe un accesseur `Uri get analyzeUri` et un accesseur `Map<String, String> get headers` : `Content-Type: application/json; charset=utf-8`, `Accept: application/json`, plus l'en-tête d'authentification **uniquement si `apiKey` n'est pas vide**.
+
+### 10.2 Requête (provisoire, modifiable uniquement dans `screening_request.dart`)
+
+`POST {baseUrl}{analyzePath}` — corps JSON :
+
+```json
+{
+  "nom": "Dupont",
+  "prenom": "Camille",
+  "age": 34,
+  "sexe": "femme",
+  "photo": "<PNG encodé en base64, sans préfixe data:>"
+}
+```
+
+- `age` est un **entier** ; `sexe` vaut `femme`, `homme` ou `autre` ; `photo` est le PNG en base64 (encodage fait dans un isolate).
+- Nom et prénom sont envoyés **après suppression des espaces de début et de fin**.
+
+### 10.3 Réponse attendue (provisoire, modifiable uniquement dans `screening_result.dart` et `api_config.dart`)
+
+Corps JSON **objet** ; le champ `ApiConfig.responseTextKey` contient **une chaîne non vide** (le bloc de texte explicatif) :
+
+```json
+{ "resultat": "Texte explicatif complet affiché tel quel dans l'application." }
+```
+
+Aucune valeur, aucun score, aucun statut n'est lu ni affiché : **uniquement ce texte**.
+
+### 10.4 Règles
+
+- Aucune donnée personnelle ni photo n'est **jamais** écrite dans les journaux (`print`, `debugPrint`, etc.).
+- HTTPS par défaut (voir section 12 pour le cas HTTP).
+- Le service reçoit un `http.Client` en paramètre de constructeur (injection) ; il est fermé proprement.
+
+---
+
+## 11. Textes de l'interface (tous dans `app_strings.dart`, aucun texte en dur ailleurs)
+
+Utiliser des guillemets doubles ou échapper les apostrophes. Les apostrophes sont droites (`'`), comme dans la maquette.
+
+| Clé | Texte |
+|---|---|
+| `appName` | Dépiste Retino |
+| `badgeKind` | Dépistage bienveillant |
+| `badgeVersion` | IA Santé v2.4 |
+| `introTitle` | Un petit contrôle de vos yeux, en quelques secondes. |
+| `introText` | Positionnez confortablement votre regard. Nous veillons sur la clarté et la vitalité de vos yeux en une seule prise bienveillante. |
+| `infoTitle` | Vos informations |
+| `infoSubtitle` | Nécessaire pour calibrer l'analyse |
+| `confidential` | Confidentiel |
+| `labelNom` / `hintNom` | Nom / Dupont |
+| `labelPrenom` / `hintPrenom` | Prénom / Camille |
+| `labelAge` / `hintAge` | Âge / 34 ans |
+| `labelSexe` / `hintSexe` | Sexe / Sélectionner... |
+| `sexeFemme` / `sexeHomme` / `sexeAutre` | Femme / Homme / Autre / Non précisé |
+| `errRequired` | Ce champ est obligatoire |
+| `errAge` | Entrez un âge valide (de 1 à 120) |
+| `errSexe` | Veuillez sélectionner une option |
+| `captureTitle` | Viseur guidé simultané |
+| `lightBadge` | Lumière naturelle |
+| `guideText` | Positionnez vos deux yeux dans le cadre |
+| `instruction` | Placez vos yeux face à l'objectif, à environ 30 cm, dans un endroit bien éclairé. |
+| `shutterLabel` | Appuyer pour capturer |
+| `semShutter` | Prendre la photo |
+| `semFlashOn` / `semFlashOff` | Activer le flash / Désactiver le flash |
+| `semSwitchCamera` | Changer de caméra |
+| `permDenied` | L'accès à la caméra est nécessaire pour photographier vos yeux. |
+| `permAllow` | Autoriser la caméra |
+| `permSettings` | Ouvrir les réglages |
+| `noCamera` | Aucune caméra n'est disponible sur cet appareil. |
+| `cameraError` | La caméra n'a pas pu démarrer. |
+| `previewTitle` | Cliché instantané |
+| `previewBadge` | Prêt pour l'analyse |
+| `retake` | Reprendre |
+| `analyze` | Analyser |
+| `analyzing` | Analyse... |
+| `analyzed` | Analyse terminée |
+| `loadingTitle` | Analyse en cours… |
+| `step1Title` | Clarté sclérale bilatérale |
+| `step1Sub` | Recherche d'indices pigmentaires ou jaunâtres sur les deux yeux. |
+| `step2Title` | Reflets et réseau vasculaire |
+| `step2Sub` | Évaluation simultanée de la pâleur et de la fatigue conjonctivale. |
+| `loadingNote` | Synthèse et unification des marqueurs bilatéraux… Élaboration de votre bilan global. |
+| `resultsTitle` | Résultats de l'analyse |
+| `resultsLabel` | BILAN GLOBAL UNIFIÉ |
+| `today` | Aujourd'hui à |
+| `secureBold` | Résultat enregistré en toute sécurité. |
+| `secureRest` | Données médicales chiffrées de bout en bout sur votre appareil. |
+| `disclaimer` | Ce résultat est une aide au dépistage et ne remplace pas un avis médical. En cas de doute, d'irritation persistante ou de gêne visuelle, parlez-en à votre ophtalmologue ou médecin traitant. |
+| `errNoConnection` | Pas de connexion |
+| `errServer` | Serveur indisponible |
+| `errTimeout` | Le délai d'attente est dépassé. Veuillez reprendre la photo. |
+
+---
+
+## 12. Configuration native
+
+### 12.1 Création du projet (à documenter dans le README, dans cet ordre)
+
+1. `flutter create --org com.max --project-name depiste_retino --platforms=android,ios depiste_retino`
+2. Se placer dans le dossier, copier par-dessus les fichiers livrés (`lib/`, `pubspec.yaml`, `analysis_options.yaml`, `docs/`, `README.md`).
+3. Appliquer les modifications natives ci-dessous.
+4. `flutter pub get`, puis `flutter run`.
+
+### 12.2 Android
+
+Livrer le fichier **`android/app/src/main/AndroidManifest.xml` complet**, adapté au modèle généré par la version de Flutter indiquée en section 1, avec :
+- `<uses-permission android:name="android.permission.CAMERA"/>` et `<uses-permission android:name="android.permission.INTERNET"/>` ;
+- `<uses-feature android:name="android.hardware.camera" android:required="false"/>` et `<uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>` ;
+- `android:label="Dépiste Retino"` sur `<application>` ;
+- `android:screenOrientation="portrait"` sur l'activité principale ;
+- un **commentaire** à côté de `<application>` expliquant que, par défaut, le trafic HTTP non chiffré est interdit, et que si l'API est en HTTP il faut ajouter `android:usesCleartextTraffic="true"` (ne **pas** l'ajouter par défaut).
+
+Livrer l'extrait de `android/app/build.gradle(.kts)` à modifier (écrit pour le format généré par la version de Flutter indiquée ; mentionner l'équivalent de l'autre format dans une note) :
+- `applicationId = "com.max.app"` (laisser le `namespace` généré tel quel) ;
+- `minSdk` selon la règle de la section 1.
+
+### 12.3 iOS
+
+Livrer les extraits à ajouter/modifier dans `ios/Runner/Info.plist` :
+- `CFBundleDisplayName` = `Dépiste Retino` ;
+- `NSCameraUsageDescription` = « Dépiste Retino utilise la caméra pour photographier vos yeux et réaliser le dépistage. » ;
+- `UISupportedInterfaceOrientations` : **uniquement** `UIInterfaceOrientationPortrait` ; idem pour `UISupportedInterfaceOrientations~ipad`.
+
+Livrer l'extrait du `ios/Podfile` : dans `post_install`, ajouter pour chaque cible `config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', 'PERMISSION_CAMERA=1']` (requis par `permission_handler`) ; version de plateforme iOS selon la règle de la section 1.
+
+Indiquer dans le README comment changer l'identifiant `PRODUCT_BUNDLE_IDENTIFIER` en `com.max.app` (cibles `Runner` ; `com.max.app.RunnerTests` pour les tests).
+
+---
+
+## 13. Documentation à produire (en français, pour une équipe qui doit travailler simplement et efficacement)
+
+Ton : clair, direct, phrases courtes, exemples concrets, commandes prêtes à copier. Aucun jargon inutile. Chaque document commence par « À quoi sert ce document » et « Pour qui ».
+
+| Fichier | Contenu obligatoire |
+|---|---|
+| `README.md` | 1) Présentation en 5 lignes. 2) Fonctionnalités et hors-périmètre. 3) Prérequis (Flutter à la version indiquée, SDK Android, téléphone). 4) Création du projet (12.1). 5) Configuration native (renvoi vers 12). 6) Configuration de l'API avec `--dart-define` (exemple complet de commande). 7) Lancer sur un téléphone Android (options développeur, débogage USB, `flutter devices`, `flutter run`). 8) Générer un APK de test. 9) Structure du projet (arbre commenté). 10) Dépannage (permission caméra, `minSdk`, `pod install`, HTTP bloqué, police téléchargée au premier lancement avec connexion Internet, « Serveur indisponible » tant que l'API n'est pas configurée). 11) Tableau « Versions ciblées » (packages + valeur finale de `minSdk` et de la cible iOS). 12) Liens vers `docs/`. |
+| `docs/ARCHITECTURE.md` | Couches et responsabilités de **chaque fichier**, schéma Mermaid du flux de données, **diagramme d'états** de la page (initial → photo prête → envoi → résultat / erreur), **diagramme de séquence** de l'envoi (UI → Controller → ApiService → API), cycle de vie de la caméra, « où modifier quoi » (tableau besoin → fichier). |
+| `docs/SPECIFICATIONS.md` | Spécification fonctionnelle lisible par un non-développeur : parcours utilisateur, règles de validation, états de l'écran, messages d'erreur, ce qui est volontairement exclu (section 3.2). |
+| `docs/API_INTEGRATION.md` | Contrat provisoire (10.2, 10.3), exemple `curl`, **checklist « quand la documentation de l'API arrive »** (URL, chemin, authentification, noms des champs envoyés, nom du champ de réponse, codes d'erreur) avec le fichier exact à modifier pour chaque point, correspondance erreurs → messages, rappel : la blockchain est gérée par l'API, pas par l'application. |
+| `docs/DESIGN_SYSTEM.md` | Couleurs, typographie, rayons, ombres, composants communs, correspondance maquette → widget, règle « jamais de couleur, taille ou texte en dur dans un widget », table de conversion Tailwind → Flutter (section 7). |
+| `docs/CONTRIBUTING.md` | Organisation Git (branches `feature/…`, `fix/…`, messages de commit en français à l'impératif), style de code, nommage, comment ajouter un texte / un widget / une couleur, `dart format` et `flutter analyze` avant chaque commit, checklist de relecture, interdits (nouveau package sans accord, stockage local, texte en dur). |
+| `docs/TESTS_MANUELS.md` | Plan de tests **manuels** (pas de tests automatisés) sous forme de tableau « Scénario / Étapes / Résultat attendu », **au moins 30 scénarios** couvrant : permission accordée/refusée/refusée définitivement, retour depuis les réglages, bascule de caméra, flash, capture, reprise, chaque règle de validation, envoi réussi, mode avion (« Pas de connexion »), URL invalide (« Serveur indisponible »), délai dépassé, résultat remplacé par un nouvel envoi, absence de fichier photo conservé, aucune persistance après fermeture, orientation verrouillée, taille de texte maximale, apparence conforme à la maquette. |
+| `docs/DECISIONS.md` | Reprendre les sections 2.3, l'annexe A et l'annexe B de ce prompt sous forme de journal des décisions (décision / raison / qui l'a prise). Ajouter une section **« Points d'attention produit »** : les textes « Confidentiel », « IA Santé v2.4 », « Données médicales chiffrées de bout en bout sur votre appareil » et l'icône `verified` sont **statiques** (identiques à la maquette) ; l'application **n'implémente aucun chiffrement** et n'évalue pas la gravité du résultat. |
+| `docs/HYPOTHESES.md` | Journal des cas non couverts (règle 3). S'il n'y en a aucun : écrire « Aucune hypothèse supplémentaire n'a été nécessaire. » |
+
+---
+
+## 14. Qualité du code
+
+- `flutter analyze` doit retourner **0 problème** ; code formaté `dart format`.
+- `analysis_options.yaml` : inclure `package:flutter_lints/flutter.yaml`, sans règle supplémentaire.
+- **Aucune valeur en dur** dans les widgets : couleurs → `AppColors` ; textes → `AppStrings` ; tailles/rayons/espacements → `AppDimens` ; styles → `AppTextStyles`.
+- **Commentaires en français** : en-tête de chaque fichier (rôle en 1 à 3 lignes), `///` sur chaque classe et méthode publique, commentaires en ligne sur toute logique non évidente (isolate, découpe du masque, pointillés, mise à l'échelle de l'aperçu, mapping des erreurs).
+- Un widget public par fichier ; constructeurs `const` partout où c'est possible.
+- Libérer systématiquement : `TextEditingController`, `FocusNode`, `AnimationController`, `StreamSubscription`, `CameraController`, `http.Client`.
+- Ne jamais utiliser `BuildContext` après un `await` sans vérifier `mounted`.
+- Aucune API dépréciée pour la version de Flutter indiquée.
+- Aucun `print`, aucune donnée personnelle dans les journaux.
+
+---
+
+## 15. Format de livraison
+
+1. Livre en **6 lots**, dans cet ordre :
+   - **Lot 1** : `README.md`, `pubspec.yaml`, `analysis_options.yaml`, fichiers natifs Android et iOS (section 12).
+   - **Lot 2** : `lib/core/**` (config, constants, theme, utils).
+   - **Lot 3** : `lib/features/screening/data/**` et `lib/features/screening/logic/**`.
+   - **Lot 4** : `lib/features/screening/ui/widgets/common/**` puis `app_header`, `intro_section`, `patient_info_card`, `pill_text_field`, `capture_card`, `viewfinder`, `viewfinder_overlay_painter`, `camera_control_button`, `camera_permission_view`, `shutter_button`.
+   - **Lot 5** : `preview_card`, `loading_card`, `error_banner`, `results_section`, `disclaimer_card`, `screening_page.dart`, `app.dart`, `main.dart`.
+   - **Lot 6** : tous les fichiers de `docs/`.
+2. Pour **chaque fichier** : un titre avec le **chemin complet** en code (`lib/core/theme/app_colors.dart`), puis **un seul bloc de code** contenant le fichier **entier**. Pour les fichiers Markdown contenant des blocs de code ou des diagrammes, entoure le fichier de **quatre** accents graves.
+3. Termine chaque lot par : `LOT X/6 TERMINÉ — écris « continue » pour le lot suivant.` et attends. Si un lot est trop long, découpe-le en `X.a`, `X.b` sans modifier l'ordre.
+4. Après le lot 6 : affiche l'**arborescence finale complète** des fichiers livrés, puis la **checklist de la section 16** cochée point par point (✅ ou ❌ avec correction immédiate).
+
+---
+
+## 16. Checklist finale (à vérifier avant de rendre le dernier lot)
+
+- [ ] L'en-tête n'affiche que « Dépiste Retino » (pas de logo, pas d'icône, pas d'avatar, pas de bouton info).
+- [ ] Aucun bouton « Choisir depuis la galerie ». Aucun badge « Position stable détectée ». Aucun bouton « Consulter un professionnel de santé ».
+- [ ] Le viseur affiche l'aperçu caméra réel, le masque, la pilule-guide pointillée animée, les repères des deux yeux et le texte central.
+- [ ] Boutons flash (caméra arrière seulement) et changement de caméra (si ≥ 2 caméras) présents ; caméra avant par défaut.
+- [ ] Permission refusée : obturateur désactivé, bouton « Autoriser la caméra » / « Ouvrir les réglages » fonctionnel.
+- [ ] Photo en **PNG**, orientation corrigée, **jamais écrite sur le disque** ; fichier temporaire supprimé immédiatement.
+- [ ] Les 4 champs sont obligatoires, validés comme en 9.5, avec messages sous les champs ; rien n'est envoyé si invalide.
+- [ ] Envoi JSON conforme à 10.2 ; délai maximal 60 s ; messages exacts « Pas de connexion », « Serveur indisponible » ; délai dépassé → photo effacée et message de la section 11.
+- [ ] Aucun moyen d'annuler une analyse ; Analyser et Reprendre inactifs pendant l'envoi.
+- [ ] Le résultat est **un seul bloc de texte** : pas de titre « Diagnostic… », pas de badge « Rassurant », pas de pastilles, pas de score ; heure de réception réelle.
+- [ ] L'ancien résultat disparaît à l'envoi suivant ; les résultats apparaissent sans animation.
+- [ ] Bloc d'avertissement présent en bas, texte identique, sans bouton.
+- [ ] Aucune persistance après fermeture de l'application.
+- [ ] Portrait verrouillé (Dart + Android + iOS) ; thème clair seul ; français seul.
+- [ ] Aucune couleur, taille ou texte en dur dans les widgets ; aucun package hors section 4.
+- [ ] Rendu conforme à la maquette : rayons (32 / 48 pilule / 16), ombres, espacements, polices, icônes.
+- [ ] `docs/` complet (8 fichiers) + `README.md` complet.
+- [ ] Commentaires en français partout ; `flutter analyze` sans problème (vérification mentale).
+
+---
+
+## Annexe A — Décisions fournies par le client (sources de vérité)
+
+| Sujet | Décision du client |
+|---|---|
+| Nom de l'application | Dépiste Retino |
+| Plateformes | Android et iOS ; test sur téléphone Android |
+| Identifiant | com.max.app |
+| Contexte | Projet scolaire |
+| Périmètre du code | Uniquement le code Flutter qui envoie la photo (et les infos) à une API et affiche la réponse |
+| Fidélité visuelle | Identique à la maquette Stitch, au pixel près ; les spécifications ont priorité sur la maquette |
+| Thème / orientation / police | Clair seulement ; portrait seulement ; police de la maquette (Plus Jakarta Sans) |
+| Icône d'application | Aucune |
+| Accessibilité | Réglages simples |
+| Photo | Les deux yeux sur la même photo ; caméra au choix de l'utilisateur ; flash proposé ; **pas de contrôle de qualité** ; **pas de galerie** ; format PNG ; **supprimée** (non conservée sur le téléphone) |
+| Permission refusée | La photo est impossible ; l'accès caméra est redemandé |
+| API | Existe déjà ; URL/documentation/accès inconnus pour l'instant → emplacement préparé ; **pas de mock** ; envoi et réponse en **JSON** |
+| Réponse | Un seul bloc de texte ; pas de valeur, pas de score ; le texte explicatif vient de l'API |
+| Délai | 1 minute, puis reprendre la photo |
+| Erreurs | « pas de connexion » ; « serveur indisponible » ; aucune erreur propre à la photo |
+| Annulation | Impossible d'annuler une analyse en cours |
+| Blockchain / données | Gérées par l'API ; l'application ne fait qu'envoyer et recevoir |
+| Données à saisir | Les 4 champs (Nom, Prénom, Âge, Sexe), obligatoires pour tout envoi |
+| Compte | Aucun (pas d'inscription) |
+| Consentement / lois / verrouillage | Aucun écran de consentement ; aucune loi à traiter ; aucun verrouillage |
+| Historique / partage | Aucun historique ; aucune fonction de partage |
+| Éléments retirés de la maquette | Bouton « Consulter un professionnel de santé » ; bouton info |
+| Avertissement médical | Texte conservé tel quel |
+| Résultats | L'ancien résultat disparaît après l'envoi de nouvelles données ; les résultats apparaissent simplement (sans animation) |
+| Technique | Pas de préférence (meilleure pratique) ; pas de tests unitaires ; code commenté en français |
+| Livrables | Projet complet, README, configuration des permissions Android/iOS, **documentation pour l'équipe** |
+
+## Annexe B — Décisions de rédaction (prises pour que l'exécutant n'ait rien à décider)
+
+| N° | Décision | Raison |
+|---|---|---|
+| 1 | Le nom affiché « Dépiste Retino » remplace « ClarEye » ; le logo image de l'en-tête est supprimé | Le client donne un nom d'application et « pas d'icône » |
+| 2 | Le badge « Position stable détectée » est supprimé | Il annonce une détection en temps réel alors que le client refuse tout contrôle de qualité |
+| 3 | Les textes « Confidentiel », « IA Santé v2.4 », « Données médicales chiffrées… » et l'icône `verified` sont conservés tels quels (statiques) | Règle C ; ils sont consignés comme « points d'attention produit » dans `docs/DECISIONS.md` |
+| 4 | Le bloc d'avertissement médical est ajouté en bas de page, sans bouton | Le client a demandé de conserver le texte ; la nouvelle maquette ne le contient plus |
+| 5 | Caméra avant par défaut | L'utilisateur doit voir le cadre pour placer ses deux yeux |
+| 6 | Flash = mode torche, visible seulement sur la caméra arrière | Les caméras avant n'ont généralement pas de flash |
+| 7 | Résolution `veryHigh` (1080p) | Compromis qualité / poids d'un PNG envoyé en JSON |
+| 8 | Photo convertie en PNG **en mémoire** ; fichier temporaire supprimé aussitôt | « La photo est supprimée du téléphone » |
+| 9 | Délai de 60 s pour toute la requête ; après délai dépassé, la photo est effacée | « Après 1 min, on doit reprendre la photo » |
+| 10 | Distinction « Pas de connexion » / « Serveur indisponible » via `connectivity_plus` ; tout statut HTTP hors 2xx = « Serveur indisponible » | Deux messages demandés, aucun détail fourni |
+| 11 | Texte du message de délai dépassé : « Le délai d'attente est dépassé. Veuillez reprendre la photo. » | Aucun texte fourni |
+| 12 | Aucune persistance des champs saisis ni du dernier résultat | « Pas de compte », « aucun historique » |
+| 13 | Règles de validation : Nom/Prénom non vides (60 max), Âge entier 1–120, Sexe choisi | Bornes de la maquette (`min=1`, `max=120`) |
+| 14 | Gestion d'état : `provider` + `ChangeNotifier` ; architecture 3 couches | Simple et connue d'une équipe débutante |
+| 15 | Polices via `google_fonts` (téléchargement au premier lancement, puis cache) ; icônes via `material_symbols_icons` | Fidélité visuelle sans fichier binaire à fournir |
+| 16 | Contrat JSON provisoire (clés `nom`, `prenom`, `age`, `sexe`, `photo` ; réponse `resultat`) | L'API n'est pas documentée ; tout est isolé dans 3 fichiers |
+| 17 | Configuration de l'API par `--dart-define` ; HTTPS par défaut | Pas de secret dans le code ; sécurité de base |
+| 18 | Les blocs apparaissent progressivement (aperçu après capture, chargement pendant l'envoi, résultats après réponse) avec défilement automatique | La maquette empile tous les états ; l'application réelle n'en montre qu'un à la fois |
+| 19 | Le bouton Analyser a trois états (normal, « Analyse... », « Analyse terminée ») | Reprise des états du script de la maquette |
+| 20 | Heure de réception « Aujourd'hui à HH:mm » (ou « jj/MM à HH:mm ») | Remplace l'heure fictive de la maquette |
+| 21 | Aperçu caméra réel à la place du fond simulé ; masque et repères conservés | Un viseur réel est indispensable |
+| 22 | Bannière d'erreur dans les couleurs `errorContainer` du design system | Message d'erreur absent de la maquette |
+| 23 | Largeur maximale du contenu 480 px ; téléphones uniquement | Portrait seul ; pas de mise en page tablette demandée |
+| 24 | Taille du texte système bornée entre 1,0 et 1,3 | « Réglages d'accessibilité simples » sans casser la mise en page |
+| 25 | Application en français uniquement, sans internationalisation | Maquette entièrement en français |
+| 26 | Identifiants de code en anglais, commentaires et documentation en français | Convention courante ; le client exige des commentaires en français |
+| 27 | Animations de la maquette conservées, arrêtées si l'utilisateur a désactivé les animations système | Règle C + accessibilité |

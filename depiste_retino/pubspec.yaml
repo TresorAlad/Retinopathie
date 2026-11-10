@@ -1,0 +1,28 @@
+name: depiste_retino
+description: "Application mobile Flutter de dépistage rétinien et oculaire bienveillant."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  camera: any
+  permission_handler: any
+  image: any
+  http: any
+  connectivity_plus: any
+  provider: any
+  google_fonts: any
+  material_symbols_icons: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: any
+
+flutter:
+  uses-material-design: true
