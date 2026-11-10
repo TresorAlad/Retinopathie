@@ -11,7 +11,7 @@ API FastAPI pour l'application de dépistage de la rétinopathie diabétique.
 - Blockchain locale : ancrage à l'upload (`registered:<index>`) et à la validation médecin (`review:<index>`).
 - Politique stricte : si la blockchain est activée et échoue, l'opération est annulée (503).
 - Les lectures GET ne créent pas de bloc.
-- Adaptateur IA encore en attente de contrat technique (`ai_status` = `pending`).
+- Service IA dans `ia/` : si `AI_SERVICE_URL` est défini, analyse à l'upload ; sinon `ai_status` = `pending`.
 
 ## Démarrage avec Docker (recommandé)
 

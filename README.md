@@ -6,13 +6,16 @@ Dépôt du projet de dépistage de la rétinopathie diabétique (monorepo par do
 
 | Branche | Rôle |
 |---------|------|
-| `main` | Branche d'intégration : contient le dossier `backend/` (et plus tard le frontend). |
+| `main` | Branche d'intégration : `backend/`, `blockchain/`, `ia/`. |
 | `feature/backend` | Travail API FastAPI et intégration blockchain. |
 | `feature/react` | Travail interface (équipe React). |
-| `blockchain` | Historique du module blockchain (fusionné dans `feature/backend`). |
+| `blockchain` | Historique (fusionné). |
+| `ia` | Service Flask de classification (`POST /predict`, port 8001). |
 
-Le dossier `blockchain/` contient la chaîne locale (PoW + chiffrement AES), branchée à l'**upload** et à la **validation médecin** uniquement (pas aux GET). Voir `backend/app/services/blockchain_service.py`.
+- **blockchain/** : ancrage chiffré (upload + validation médecin).
+- **ia/** : module IA relié au backend via `AI_SERVICE_URL`.
 
-## Démarrer le backend
+## Démarrer
 
-Voir [backend/README.md](backend/README.md).
+- Backend (+ db + ia en mock) : [backend/README.md](backend/README.md) (`docker compose up`).
+- IA seule : [ia/README.md](ia/README.md).

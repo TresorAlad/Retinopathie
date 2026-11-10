@@ -32,12 +32,24 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       FERNET_KEY: ${FERNET_KEY:-2z5Yj4f3cQxg9dV6s8W1mK0pR7tN3aB5cE2hG6jL9uA=}
       MAX_IMAGE_SIZE_MB: ${MAX_IMAGE_SIZE_MB:-10}
+      AI_SERVICE_URL: http://ia:8001
     volumes:
       - image_storage:/app/storage
       - blockchain_data:/app/blockchain_data
     depends_on:
       db:
         condition: service_healthy
+      ia:
+        condition: service_started
+
+  ia:
+    build:
+      context: ../ia
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      IA_MODE: mock
 
 volumes:
   pgdata:
