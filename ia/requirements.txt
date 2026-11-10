@@ -1,0 +1,39 @@
+# ============================================================
+# DEPENDANCES DU SERVICE IA
+# Versions figées pour éviter les surprises le jour de la démo
+# Installation : pip install -r requirements.txt
+# ============================================================
+
+# --- Framework web ---
+flask==3.0.3
+# Flask : le micro-framework qui crée le serveur HTTP et les routes
+
+# --- Upload de fichiers ---
+werkzeug==3.0.3
+# Werkzeug : dépendance de Flask, gère request.files (multipart/form-data)
+
+# --- Manipulation d'images ---
+pillow==11.0.0
+# Pillow (PIL) : ouvrir, redimensionner, convertir les images
+
+# --- Deep learning ---
+torch==2.3.1
+# PyTorch : charger et exécuter les modèles
+
+torchvision==0.18.1
+# Torchvision : modèles pré-entraînés (ResNet) + transformations
+
+# --- Calcul numérique ---
+numpy==1.26.4
+# NumPy : tableaux, softmax, argmax (utilisé par torch)
+
+# --- Tests ---
+pytest==8.2.2
+# Pytest : écrire et lancer les tests unitaires
+
+requests==2.32.3
+# Requests : tester l'API manuellement (curl en Python)
+
+# --- Serveur de production (optionnel) ---
+gunicorn==22.0.0
+# Gunicorn : lancer Flask en prod (en dev, python app.py suffit)

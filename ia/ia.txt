@@ -1,0 +1,17 @@
+Image reçue
+    │
+    ▼
+┌─────────────────────┐
+│  EyeChecker         │  ← ResNet18 (2 classes)
+│  « Est-ce un œil ? »│
+└─────────┬───────────┘
+          │
+    non ◄─┤
+     │    │ oui
+     ▼    ▼
+  Rejet  ┌─────────────────────┐
+         │  StageClassifier    │  ← ResNet50 (5 classes)
+         │  « Quel stade ? »   │
+         └─────────┬───────────┘
+                   ▼
+              JSON final
