@@ -19,14 +19,14 @@ API FastAPI pour l'application de dépistage de la rétinopathie diabétique.
 
 Exécute les commandes depuis le dossier **`Retinopathie/backend`** (pas l'ancien nom `diabetic-retinopathy-backend`).
 
-Créer `.env` (optionnel mais recommandé en prod) :
+Créer **`backend/.env`** (obligatoire pour Docker : `FERNET_KEY` et `JWT_SECRET_KEY` ne doivent jamais être versionnés) :
 
 ```bash
 chmod +x scripts/prepare-env.sh
 ./scripts/prepare-env.sh
 ```
 
-Sans `.env`, Docker Compose utilise des secrets de **développement** intégrés (uniquement pour tester en local).
+Si une clé Fernet a été exposée (ex. alerte GitGuardian), générez-en une nouvelle, mettez à jour `.env`, puis supprimez ou rechiffrez le dossier `storage/` en local (les anciennes images ne seront plus lisibles).
 
 Construire et lancer (le premier build prend quelques minutes, beaucoup moins qu'avec l'ancienne image) :
 

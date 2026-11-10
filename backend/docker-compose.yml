@@ -27,10 +27,10 @@ services:
       STORAGE_DIR: /app/storage
       BLOCKCHAIN_DATA_DIR: /app/blockchain_data
       BLOCKCHAIN_ENABLED: "true"
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-docker-jwt-secret-change-in-dotenv}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Définir JWT_SECRET_KEY dans backend/.env}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
-      FERNET_KEY: ${FERNET_KEY:-2z5Yj4f3cQxg9dV6s8W1mK0pR7tN3aB5cE2hG6jL9uA=}
+      FERNET_KEY: ${FERNET_KEY:?Définir FERNET_KEY dans backend/.env (./scripts/prepare-env.sh)}
       MAX_IMAGE_SIZE_MB: ${MAX_IMAGE_SIZE_MB:-10}
       AI_SERVICE_URL: http://ia:8001
       MOBILE_API_KEY: ${MOBILE_API_KEY:-dev-mobile-api-key-change-me}

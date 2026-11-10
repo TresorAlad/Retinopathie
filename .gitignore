@@ -1,4 +1,7 @@
 .cursor/
+.env
+backend/.env
+ia/.env
 
 __pycache__/
 *.py[cod]
