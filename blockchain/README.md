@@ -166,34 +166,16 @@ python -m pytest tests/test_blockchain.py -v
 [INFO] Blockchain fonctionnelle et sécurisée.
 ```
 
-## Intégration FastAPI (exemple)
+## Intégration FastAPI (contrat actuel)
 
-```python
-# Dans votre backend FastAPI
-from blockchain import Blockchain
-from encryption import get_or_create_key, encrypt_data, decrypt_data
+Le backend appelle [`backend/app/services/blockchain_service.py`](../backend/app/services/blockchain_service.py) :
 
-# Initialisation (au démarrage de l'app)
-blockchain = Blockchain()
-aes_key = get_or_create_key()
+- **POST dépistage** : ancrage `screening_anchor` avec `screening_id` + `image_sha256` uniquement.
+- **PATCH diagnostic** : ancrage `diagnosis_review` (stade, hash image, identifiant médecin).
+- **GET** : ne modifie jamais la chaîne.
+- Si `BLOCKCHAIN_ENABLED=true` et échec d'ancrage : le dépistage est annulé (politique stricte).
 
-# Enregistrer un dépistage
-def add_screening(screening_data: dict):
-    encrypted = encrypt_data(screening_data, aes_key)
-    block = blockchain.add_block(encrypted)
-    return {"block_index": block.index, "block_hash": block.hash}
-
-# Récupérer un dépistage (avec clé)
-def get_screening(index: int):
-    block = blockchain.get_block(index)
-    if block:
-        return decrypt_data(block.data, aes_key)
-    return None
-
-# Vérifier l'intégrité
-def validate_chain():
-    return blockchain.validate_chain()
-```
+Variables utiles : `BLOCKCHAIN_DATA_DIR`, `BLOCKCHAIN_POW_DIFFICULTY` (ex. `2` en dev), `BLOCKCHAIN_ENABLED`.
 
 ## Sécurité
 
@@ -201,7 +183,7 @@ def validate_chain():
 - **Nonce** : 12 octets aléatoires uniques par chiffrement (GCM)
 - **Authentification** : Tag GCM vérifié automatiquement au déchiffrement
 - **Intégrité** : SHA-256 sur tous les champs du bloc + liaison previous_hash
-- **Aucune donnée personnelle** : Seuls des identifiants pseudonymisés sont stockés
+- **Aucune donnée personnelle dans les blocs** : pas de nom patient, pas d'image (uniquement IDs techniques et hash)
 
 ## Fichiers de données
 

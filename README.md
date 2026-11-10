@@ -11,7 +11,7 @@ Dépôt du projet de dépistage de la rétinopathie diabétique (monorepo par do
 | `feature/react` | Travail interface (équipe React). |
 | `blockchain` | Historique du module blockchain (fusionné dans `feature/backend`). |
 
-Le dossier `blockchain/` contient la chaîne locale (PoW + chiffrement AES) branchée via `backend/app/services/blockchain_service.py`.
+Le dossier `blockchain/` contient la chaîne locale (PoW + chiffrement AES), branchée à l'**upload** et à la **validation médecin** uniquement (pas aux GET). Voir `backend/app/services/blockchain_service.py`.
 
 ## Démarrer le backend
 

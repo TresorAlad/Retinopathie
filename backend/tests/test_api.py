@@ -71,6 +71,7 @@ def test_screening_upload_read_image_and_diagnosis(client):
     assert diagnosis.status_code == 200
     assert diagnosis.json()["diagnosis_status"] == "reviewed"
     assert diagnosis.json()["diagnosis"] == "mild"
+    assert "review:" in diagnosis.json()["blockchain_status"]
 
 def test_invalid_image_rejected(client):
     token = token_for(client)

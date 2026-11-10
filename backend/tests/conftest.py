@@ -25,9 +25,10 @@ from app.models import User, Patient
 
 @pytest.fixture()
 def client():
-    from app.services import blockchain_service
+    from app.services.blockchain_service import reset_chain_for_tests
 
-    blockchain_service._chain = None
+    reset_chain_for_tests()
+    os.environ["BLOCKCHAIN_DATA_DIR"] = tempfile.mkdtemp(prefix="api_blockchain_")
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()

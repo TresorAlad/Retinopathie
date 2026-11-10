@@ -5,6 +5,7 @@ from app.models import User, Patient, Screening
 from app.routes.auth import router as auth_router
 from app.routes.patients import router as patients_router
 from app.routes.screenings import router as screenings_router
+from app.routes.health import router as health_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,6 +22,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(patients_router)
 app.include_router(screenings_router)
+app.include_router(health_router)
 
 @app.get("/")
 def accueil():

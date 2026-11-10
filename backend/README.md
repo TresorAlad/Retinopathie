@@ -8,7 +8,9 @@ API FastAPI pour l'application de dépistage de la rétinopathie diabétique.
 - Patients : liste et détail.
 - Dépistages : JPEG/PNG, chiffrement Fernet, SHA-256, consultation, validation médecin.
 - PostgreSQL via SQLAlchemy.
-- Blockchain locale branchée : ancrage `screening_id` + hash image (statut `registered:<index>`).
+- Blockchain locale : ancrage à l'upload (`registered:<index>`) et à la validation médecin (`review:<index>`).
+- Politique stricte : si la blockchain est activée et échoue, l'opération est annulée (503).
+- Les lectures GET ne créent pas de bloc.
 - Adaptateur IA encore en attente de contrat technique (`ai_status` = `pending`).
 
 ## Démarrage avec Docker (recommandé)
@@ -92,8 +94,17 @@ Exécute les tests API (`backend/tests`) et blockchain (`blockchain/tests`).
 | GET | `/api/v1/screenings/{id}/image` |
 | PATCH | `/api/v1/screenings/{id}/diagnosis` |
 | GET | `/api/v1/health` |
+| GET | `/api/v1/health/blockchain` (médecin) |
 
 Upload dépistage : `multipart/form-data` avec `patient_id` et fichier `image` (JPEG ou PNG).
+
+## Variables blockchain
+
+| Variable | Rôle |
+|----------|------|
+| `BLOCKCHAIN_ENABLED` | `true` par défaut ; `false` pour désactiver l'ancrage |
+| `BLOCKCHAIN_DATA_DIR` | Répertoire `blockchain.json` et clé AES |
+| `BLOCKCHAIN_POW_DIFFICULTY` | Difficulté PoW (2 recommandé en dev) |
 
 ## Sécurité
 
