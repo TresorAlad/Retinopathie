@@ -1,0 +1,79 @@
+# ============================================================
+# .dockerignore
+# Liste ce que Docker NE DOIT PAS copier dans l'image.
+# Équivalent du .gitignore, mais pour "docker build".
+# Objectif : image plus légère et build plus rapide.
+# ============================================================
+
+# --- Environnements virtuels ---
+venv/
+env/
+.venv/
+# Un venv local contient des centaines de Mo inutiles dans l'image
+# (les dépendances sont installées par pip dans le Dockerfile)
+
+# --- Cache Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+# Fichiers compilés, régénérés automatiquement dans le conteneur
+
+# --- Cache des tests ---
+.pytest_cache/
+.coverage
+htmlcov/
+# Résultats de tests locaux, pas besoin dans l'image
+
+# --- Données d'entraînement lourdes ---
+data/raw/
+data/processed/
+train/
+# Les datasets et scripts d'entraînement ne sont PAS nécessaires en prod
+# On garde seulement data/samples/ pour les tests manuels
+
+# --- Images de test (optionnel, décommenter si trop lourd) ---
+# data/samples/
+
+# --- Git ---
+.git/
+.gitignore
+# Le repo Git n'a rien à faire dans l'image
+
+# --- IDE / éditeurs ---
+.vscode/
+.idea/
+*.swp
+*.swo
+# Configurations locales de l'éditeur
+
+# --- Système ---
+.DS_Store
+Thumbs.db
+# Fichiers système macOS / Windows
+
+# --- Docker ---
+Dockerfile
+.dockerignore
+# Le Dockerfile lui-même n'a pas besoin d'être copié dans l'image
+
+# --- Documentation / meta ---
+README.md
+*.md
+LICENSE
+# Pas nécessaires pour faire tourner le service
+
+# --- Fichiers d'environnement ---
+.env
+.env.*
+# JAMAIS de secrets dans l'image
+
+# --- Logs ---
+*.log
+logs/
+# Fichiers de logs locaux
+
+# --- Tests ---
+tests/
+# Les tests ne tournent pas dans l'image de prod
+# (on les lance en local ou en CI)
