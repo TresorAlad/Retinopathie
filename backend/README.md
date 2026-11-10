@@ -11,7 +11,7 @@ API FastAPI pour l'application de dépistage de la rétinopathie diabétique.
 - Blockchain locale : ancrage à l'upload (`registered:<index>`) et à la validation médecin (`review:<index>`).
 - Politique stricte : si la blockchain est activée et échoue, l'opération est annulée (503).
 - Les lectures GET ne créent pas de bloc.
-- Service IA dans `ia/` : si `AI_SERVICE_URL` est défini, analyse PyTorch + agent ; sinon `ai_status` = `pending`.
+- Service IA dans `ia/` : si `AI_SERVICE_URL` est défini, appel Rodium AI ; sinon `ai_status` = `pending`.
 - Parcours **mobile** (sans app Flutter) : `POST /api/v1/mobile/scan` avec clé `X-Mobile-Api-Key` ; un bloc `mobile_scan` par scan valide.
 - Explorateur blockchain (JWT médecin) : `GET /api/v1/blockchain/blocks` et `GET /api/v1/blockchain/blocks/{index}`.
 

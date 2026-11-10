@@ -8,3 +8,5 @@ data/
 test_backend.db
 backend/test_backend.db
 backend/test_storage/
+ia/train/
+*.db-journal

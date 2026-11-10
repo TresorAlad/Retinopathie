@@ -9,7 +9,7 @@ Les clients **mobile (Flutter)** et **dashboard médecin (React)** ne sont pas d
 | Dossier | Rôle |
 |---------|------|
 | [backend/](backend/README.md) | API FastAPI : auth médecin, patients, dépistages, **parcours mobile** (`POST /api/v1/mobile/scan`), explorateur blockchain JWT |
-| [ia/](ia/README.md) | Flask `POST /predict` via **Rodium AI** (vision + agent) ou PyTorch local |
+| [ia/](ia/README.md) | Flask `POST /predict` via **Rodium AI** (vision + agent) |
 | [blockchain/](blockchain/README.md) | Chaîne locale chiffrée, types de blocs dont `mobile_scan` |
 
 ## Flux mobile (côté serveur)

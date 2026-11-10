@@ -1,9 +1,5 @@
-import os
 import sys
 from pathlib import Path
-
-os.environ["IA_INFERENCE_MODE"] = "local"
-os.environ.pop("RODIUMAI_API_KEY", None)
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 if str(PROJECT_ROOT) not in sys.path:

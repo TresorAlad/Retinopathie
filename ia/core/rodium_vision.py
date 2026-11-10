@@ -6,7 +6,7 @@ import re
 from typing import Any
 
 from .rodium_client import create_rodium_client, rodium_vision_model
-from .stage_classifier import STAGE_LABELS
+from .constants import STAGE_LABELS
 
 VISION_SYSTEM = """Tu analyses des images pour le dépistage de la rétinopathie diabétique.
 Tu ne poses pas de diagnostic médical définitif ; tu estimes à partir de l'image.

@@ -1,7 +1,6 @@
-"""Agent de recommandations via Rodium AI ou enrichissement rule-based."""
+"""Recommandations patient via Rodium AI (repli rule-based si échec)."""
 
 import json
-import os
 
 from .agent_prompts import SYSTEM_PROMPT, build_user_prompt
 from .rodium_client import (
@@ -36,7 +35,7 @@ def _rule_based_enrichment(stage: int, stage_label: str, risk_score: float) -> d
     }
 
 
-def _rodium_agent(stage: int, stage_label: str, risk_score: float) -> dict:
+def run_agent(stage: int, stage_label: str, risk_score: float) -> dict:
     if not rodium_configured():
         return _rule_based_enrichment(stage, stage_label, risk_score)
 
@@ -66,10 +65,3 @@ def _rodium_agent(stage: int, stage_label: str, risk_score: float) -> dict:
         fallback = _rule_based_enrichment(stage, stage_label, risk_score)
         fallback["agent_model"] = "rule-based-rodium-error"
         return fallback
-
-
-def run_agent(stage: int, stage_label: str, risk_score: float) -> dict:
-    use_rodium = os.getenv("IA_AGENT_MODE", "rodium").lower() in ("rodium", "openai")
-    if use_rodium and rodium_configured():
-        return _rodium_agent(stage, stage_label, risk_score)
-    return _rule_based_enrichment(stage, stage_label, risk_score)
