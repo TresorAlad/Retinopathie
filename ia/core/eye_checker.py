@@ -3,7 +3,7 @@
 # Rôle : vérifier que l'image est bien un fond d'œil.
 # Modèle : ResNet18 pré-entraîné, réentraîné sur 2 classes
 #          (0 = not_eye, 1 = eye)
-# Utilisé quand IA_MODE=prod dans app.py
+# Chargé au démarrage de app.py
 # ============================================================
 
 # --- Imports PyTorch ---

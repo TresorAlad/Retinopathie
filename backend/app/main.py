@@ -6,11 +6,19 @@ from app.routes.auth import router as auth_router
 from app.routes.patients import router as patients_router
 from app.routes.screenings import router as screenings_router
 from app.routes.health import router as health_router
+from app.routes.mobile import router as mobile_router
+from app.routes.blockchain import router as blockchain_router
+from app.database.connection import SessionLocal
+from app.services.system_user import ensure_mobile_system_user
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Pour le développement uniquement. Utiliser Alembic pour les migrations en équipe/production.
     Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        ensure_mobile_system_user(db)
+    finally:
+        db.close()
     yield
 
 app = FastAPI(
@@ -23,6 +31,8 @@ app.include_router(auth_router)
 app.include_router(patients_router)
 app.include_router(screenings_router)
 app.include_router(health_router)
+app.include_router(mobile_router)
+app.include_router(blockchain_router)
 
 @app.get("/")
 def accueil():

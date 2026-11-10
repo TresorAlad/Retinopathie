@@ -17,6 +17,8 @@ os.environ["STORAGE_DIR"] = "test_storage"
 os.environ["BLOCKCHAIN_DATA_DIR"] = tempfile.mkdtemp(prefix="api_blockchain_")
 os.environ["BLOCKCHAIN_POW_DIFFICULTY"] = "2"
 os.environ["BLOCKCHAIN_ENABLED"] = "true"
+os.environ["MOBILE_API_KEY"] = "test-mobile-key"
+# Scénarios IA pour pytest : AI_TEST_SCENARIO=completed|rejected (voir ai_service.py)
 
 from app.main import app
 from app.database.connection import Base, engine, SessionLocal

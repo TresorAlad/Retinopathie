@@ -33,6 +33,8 @@ services:
       FERNET_KEY: ${FERNET_KEY:-2z5Yj4f3cQxg9dV6s8W1mK0pR7tN3aB5cE2hG6jL9uA=}
       MAX_IMAGE_SIZE_MB: ${MAX_IMAGE_SIZE_MB:-10}
       AI_SERVICE_URL: http://ia:8001
+      MOBILE_API_KEY: ${MOBILE_API_KEY:-dev-mobile-api-key-change-me}
+      BLOCKCHAIN_POW_DIFFICULTY: ${BLOCKCHAIN_POW_DIFFICULTY:-2}
     volumes:
       - image_storage:/app/storage
       - blockchain_data:/app/blockchain_data
@@ -49,7 +51,14 @@ services:
     ports:
       - "8001:8001"
     environment:
-      IA_MODE: mock
+      RODIUMAI_API_KEY: ${RODIUMAI_API_KEY:-}
+      RODIUMAI_BASE_URL: ${RODIUMAI_BASE_URL:-https://api.rodiumai.io/v1}
+      RODIUMAI_VISION_MODEL: ${RODIUMAI_VISION_MODEL:-openai/gpt-4o}
+      RODIUMAI_AGENT_MODEL: ${RODIUMAI_AGENT_MODEL:-openai/gpt-4o-mini}
+      IA_INFERENCE_MODE: ${IA_INFERENCE_MODE:-auto}
+      IA_AGENT_MODE: ${IA_AGENT_MODE:-rodium}
+      EYE_CHECKER_MODEL_PATH: models/eye_checker.pt
+      STAGE_CLASSIFIER_MODEL_PATH: models/stage_classifier.pt
 
 volumes:
   pgdata:

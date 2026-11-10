@@ -15,7 +15,7 @@ from app.models.screening import Screening
 from app.models.user import User
 from app.schemas.screening import ScreeningResponse, DiagnosisUpdate
 from app.services.encryption_service import store_encrypted_image, read_encrypted_image, delete_encrypted_image
-from app.services.ai_service import analyze_retinal_image
+from app.services.ai_service import ai_recommendations_json, analyze_retinal_image
 from app.services.blockchain_service import (
     BlockchainRegistrationError,
     merge_blockchain_status,
@@ -73,6 +73,8 @@ async def create_screening(
             ai_confidence=ai["confidence"],
             image_quality=ai["image_quality"],
             retinal_image_valid=ai["retinal_image_valid"],
+            ai_recommendations=ai_recommendations_json(ai),
+            ai_patient_message=ai.get("patient_message"),
             diagnosis_status="pending_review",
             blockchain_status="not_configured",
         )

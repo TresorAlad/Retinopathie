@@ -37,3 +37,5 @@ requests==2.32.3
 # --- Serveur de production (optionnel) ---
 gunicorn==22.0.0
 # Gunicorn : lancer Flask en prod (en dev, python app.py suffit)
+
+openai>=1.40.0

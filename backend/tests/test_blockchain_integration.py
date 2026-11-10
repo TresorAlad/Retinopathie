@@ -2,8 +2,6 @@ import io
 import json
 import os
 from pathlib import Path
-from unittest.mock import patch
-
 from PIL import Image
 
 from app.services.blockchain_service import (
@@ -98,19 +96,22 @@ def test_get_screening_does_not_grow_chain(client):
     assert length_before == length_after
 
 
-def test_strict_rollback_when_blockchain_fails(client):
+def test_strict_rollback_when_blockchain_fails(client, monkeypatch):
+    from app.services import blockchain_service
+
+    def _fail_payload(_payload):
+        raise RuntimeError("échec ancrage simulé pour test")
+
+    monkeypatch.setattr(blockchain_service, "_add_encrypted_payload", _fail_payload)
+
     token = token_for(client)
     headers = {"Authorization": f"Bearer {token}"}
-    with patch(
-        "app.services.blockchain_service._add_encrypted_payload",
-        side_effect=RuntimeError("simulated"),
-    ):
-        response = client.post(
-            "/api/v1/screenings",
-            headers=headers,
-            data={"patient_id": "1"},
-            files={"image": ("retina.png", make_png(), "image/png")},
-        )
+    response = client.post(
+        "/api/v1/screenings",
+        headers=headers,
+        data={"patient_id": "1"},
+        files={"image": ("retina.png", make_png(), "image/png")},
+    )
     assert response.status_code == 503
     listed = client.get("/api/v1/screenings", headers=headers)
     assert listed.json() == []

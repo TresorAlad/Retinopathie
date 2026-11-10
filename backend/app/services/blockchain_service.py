@@ -270,6 +270,100 @@ def find_anchor_block(screening_id: int, anchor_type: str = "screening_anchor") 
     return None
 
 
+def register_mobile_scan(
+    *,
+    request_id: str,
+    screening_id: int,
+    image_sha256: str,
+    patient_id: int,
+    patient_code: str,
+    first_name: str,
+    last_name: str,
+    birth_date: str | None,
+    ai_payload: dict[str, Any],
+) -> str:
+    if not is_blockchain_enabled():
+        return "not_configured"
+
+    from datetime import datetime, timezone
+
+    try:
+        block_index = _add_encrypted_payload(
+            {
+                "type": "mobile_scan",
+                "request_id": request_id,
+                "anchored_at": datetime.now(timezone.utc).isoformat(),
+                "screening_id": screening_id,
+                "image_sha256": image_sha256,
+                **patient_blockchain_fields(
+                    patient_id, patient_code, first_name, last_name, birth_date
+                ),
+                "ia": ai_payload,
+            }
+        )
+        return f"mobile:{block_index}"
+    except Exception as exc:
+        logger.exception("Échec ancrage mobile_scan screening_id=%s", screening_id)
+        raise BlockchainRegistrationError(
+            "Impossible d'enregistrer le scan mobile sur la blockchain."
+        ) from exc
+
+
+def list_decrypted_blocks(skip: int = 0, limit: int = 50) -> list[dict[str, Any]]:
+    _ensure_blockchain_path()
+    from blockchain.encryption import decrypt_data, get_or_create_key
+
+    chain = _get_chain()
+    key = get_or_create_key()
+    rows: list[dict[str, Any]] = []
+    for block in chain.chain:
+        if block.index == 0:
+            continue
+        try:
+            data = decrypt_data(block.data, key)
+        except Exception:
+            data = {"type": "undecryptable"}
+        rows.append(
+            {
+                "index": block.index,
+                "hash": block.hash,
+                "previous_hash": block.previous_hash,
+                "timestamp": block.timestamp,
+                "nonce": block.nonce,
+                "type": data.get("type"),
+                "summary": _block_summary(data),
+            }
+        )
+    return rows[skip : skip + limit]
+
+
+def get_decrypted_block(index: int) -> dict[str, Any] | None:
+    _ensure_blockchain_path()
+    from blockchain.encryption import decrypt_data, get_or_create_key
+
+    block = _get_chain().get_block(index)
+    if block is None or index == 0:
+        return None
+    data = decrypt_data(block.data, get_or_create_key())
+    return {
+        "index": block.index,
+        "hash": block.hash,
+        "previous_hash": block.previous_hash,
+        "timestamp": block.timestamp,
+        "nonce": block.nonce,
+        "payload": data,
+    }
+
+
+def _block_summary(data: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "request_id": data.get("request_id"),
+        "screening_id": data.get("screening_id"),
+        "patient_code": data.get("patient_code"),
+        "refer_to_doctor": (data.get("ia") or {}).get("refer_to_doctor"),
+    }
+
+
 def validate_chain_integrity() -> bool:
     if not is_blockchain_enabled():
         return True

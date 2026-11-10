@@ -15,11 +15,11 @@
                ▼                 ▼
     ┌──────────────────┐  ┌──────────────────┐
     │  IA (PyTorch)    │  │  BLOCKCHAIN      │
-    │  → est-ce un œil │  │  → enregistre    │
-    │  → quel stade ?  │  │    la validation │
-    │  → score risque  │  │  → garantit la   │
-    └──────────────────┘  │    traçabilité   │
-                          └──────────────────┘
+    │  → est-ce un œil │  │  → mobile_scan   │
+    │  → quel stade ?  │  │    1 bloc/scan   │
+    │  → agent OpenAI  │  │  → ancrages      │
+    │    ou rule-based │  │    médecin       │
+    └──────────────────┘  └──────────────────┘
                ▲
                │ le médecin valide
     ┌──────────────────────────────┐

@@ -7,7 +7,7 @@
 #          2 = Modérée
 #          3 = Sévère
 #          4 = Proliférative
-# Utilisé quand IA_MODE=prod dans app.py
+# Chargé au démarrage de app.py
 # ============================================================
 
 # --- Imports PyTorch ---
@@ -40,7 +40,7 @@ STAGE_LABELS = {
     4: "Proliférative",
 }
 # ATTENTION : ces libellés doivent être EXACTEMENT les mêmes
-# que ceux du mock et du contrat figé par le Master.
+# que le contrat API backend et mobile.
 # Sinon le web docteur et le mobile afficheront des libellés différents.
 
 

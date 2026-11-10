@@ -3,7 +3,10 @@
 Micro-service Flask qui reçoit une photo de rétine et renvoie un diagnostic IA :
 - **Étape 1** : vérifier que l'image est un vrai fond d'œil
 - **Étape 2** : classifier le stade de rétinopathie (0 à 4)
-- **Sortie** : JSON avec `is_eye`, `stage`, `stage_label`, `risk_score`, `refer_to_doctor`
+- **Étape 3 (agent)** : recommandations et `patient_message` (OpenAI si clé, sinon règles métier)
+- **Sortie** : JSON avec `is_eye`, `stage`, `stage_label`, `risk_score`, `refer_to_doctor`, champs agent
+
+> **Avertissement** : démonstration pédagogique, pas un dispositif médical. Les constantes renvoyées par l'agent sont **simulées**, pas des mesures cliniques.
 
 ---
 
@@ -38,27 +41,38 @@ pip install -r requirements.txt
 
 ## 3. Lancement
 
-### Mode MOCK (par défaut — aucune IA, réponses simulées)
+### Rodium AI (recommandé pour tester)
+
+API compatible OpenAI : [rodiumai.io](https://www.rodiumai.io).
 
 ```bash
-# Windows
-set IA_MODE=mock
-python app.py
+cd ia
+cp .env.example .env
+# Renseigner RODIUMAI_API_KEY dans .env
 
-# Linux / macOS
-IA_MODE=mock python app.py
+export RODIUMAI_API_KEY=rd_sk_votre_cle
+export IA_INFERENCE_MODE=rodium
+export IA_AGENT_MODE=rodium
+python app.py
 ```
 
-### Mode PROD (avec les vrais modèles)
+Test rapide :
 
 ```bash
-# Nécessite models/eye_checker.pt et models/stage_classifier.pt
-# Windows
-set IA_MODE=prod
-python app.py
+curl http://localhost:8001/health
+curl -X POST http://localhost:8001/predict -F "image=@chemin/vers/retine.jpg"
+```
 
-# Linux / macOS
-IA_MODE=prod python app.py
+Variables principales : `RODIUMAI_API_KEY`, `RODIUMAI_BASE_URL`, `RODIUMAI_VISION_MODEL` (ex. `openai/gpt-4o`), `RODIUMAI_AGENT_MODEL` (ex. `openai/gpt-4o-mini`).
+
+Avec `IA_INFERENCE_MODE=auto`, la clé Rodium suffit (pas besoin de fichiers `.pt`).
+
+### PyTorch local (optionnel)
+
+```bash
+export IA_INFERENCE_MODE=local
+# models/eye_checker.pt et models/stage_classifier.pt requis
+python app.py
 ```
 
 Le service écoute sur **http://localhost:8001**.
@@ -76,7 +90,13 @@ curl http://localhost:8001/health
 
 Réponse :
 ```json
-{ "status": "ok", "service": "ia", "mode": "mock" }
+{
+  "status": "ok",
+  "service": "ia",
+  "inference_mode": "rodium",
+  "rodium_configured": true,
+  "rodium_vision_model": "openai/gpt-4o"
+}
 ```
 
 ---
@@ -134,7 +154,8 @@ ia/
 │   ├── image_utils.py        # Chargement + prétraitement image
 │   ├── eye_checker.py        # Étape 1 : est-ce un œil ?
 │   ├── stage_classifier.py   # Étape 2 : quel stade ?
-│   └── mock.py               # Réponses simulées (mode mock)
+│   ├── agent.py              # Étape 3 : enrichissement
+│   └── agent_prompts.py
 │
 ├── models/                   # Modèles entraînés (.pt)
 │   ├── eye_checker.pt
@@ -157,8 +178,16 @@ ia/
 
 | Variable | Valeur | Effet |
 |----------|--------|-------|
-| `IA_MODE` | `mock` (défaut) | Réponses simulées, aucune IA chargée |
-| `IA_MODE` | `prod` | Charge les vrais modèles depuis `models/` |
+| `RODIUMAI_API_KEY` | (requis mode rodium) | Clé API Rodium |
+| `RODIUMAI_BASE_URL` | `https://api.rodiumai.io/v1` | Point d'entrée compatible OpenAI |
+| `RODIUMAI_VISION_MODEL` | `openai/gpt-4o` | Modèle vision (détection œil + stade) |
+| `RODIUMAI_AGENT_MODEL` | `openai/gpt-4o-mini` | Modèle agent recommandations |
+| `IA_INFERENCE_MODE` | `auto` | `rodium`, `local` ou `auto` |
+| `IA_AGENT_MODE` | `rodium` | `rodium` ou `rule-based` |
+| `EYE_CHECKER_MODEL_PATH` | `models/eye_checker.pt` | Mode local uniquement |
+| `STAGE_CLASSIFIER_MODEL_PATH` | `models/stage_classifier.pt` | Mode local uniquement |
+
+Fichiers agent : `core/agent.py`, `core/agent_prompts.py`.
 
 ---
 
@@ -179,17 +208,8 @@ pytest tests/ -v
 docker build -t rd-ia .
 ```
 
-### Run (mode mock)
-
 ```bash
-docker run -p 8001:8001 -e IA_MODE=mock rd-ia
-```
-
-### Run (mode prod, avec les modèles montés)
-
-```bash
-docker run -p 8001:8001 -e IA_MODE=prod \
-           -v $(pwd)/models:/app/models rd-ia
+docker run -p 8001:8001 -v $(pwd)/models:/app/models rd-ia
 ```
 
 ---
@@ -210,7 +230,11 @@ Champs de la réponse (tous obligatoires) :
 | `stage_label` | str | Libellé lisible du stade |
 | `risk_score` | float | 0.0..1.0 — P(stade ≥ 2) |
 | `refer_to_doctor` | bool | `true` si `stage >= 2` |
-| `model_version` | str | Version du modèle (traçabilité) |
+| `simulated_constants` | object | Constantes pédagogiques simulées (non cliniques) |
+| `recommendations` | array | 2 à 5 actions suggérées |
+| `patient_message` | str | Texte court pour l'écran mobile |
+| `agent_model` | str | `rule-based`, modèle OpenAI, etc. |
+| `model_version` | str | Version du pipeline (traçabilité) |
 
 ---
 

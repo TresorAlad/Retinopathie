@@ -171,7 +171,16 @@ python -m pytest tests/test_blockchain.py -v
 Le backend appelle [`backend/app/services/blockchain_service.py`](../backend/app/services/blockchain_service.py) :
 
 - **Création patient** (script) : bloc `patient_record` (code, prénom, nom, date de naissance).
-- **POST dépistage** : ancrage `screening_anchor` avec `screening_id`, `image_sha256` et identité patient.
+- **POST dépistage médecin** : ancrage `screening_anchor` avec `screening_id`, `image_sha256` et identité patient.
+- **POST mobile scan** : un bloc `mobile_scan` (patient + résultats IA + hash, sans image binaire).
+- **Validation médecin** : bloc `diagnosis_review`.
+
+Explorateur côté backend (JWT, sans UI React) :
+
+- `GET /api/v1/blockchain/blocks?skip=&limit=`
+- `GET /api/v1/blockchain/blocks/{index}` (payload déchiffré pour audit).
+
+Les images restent chiffrées sur disque (Fernet) ; seuls des hachages et métadonnées entrent dans la chaîne.
 - **PATCH diagnostic** : ancrage `diagnosis_review` (stade, hash image, identifiant médecin).
 - **GET** : ne modifie jamais la chaîne.
 - Si `BLOCKCHAIN_ENABLED=true` et échec d'ancrage : le dépistage est annulé (politique stricte).

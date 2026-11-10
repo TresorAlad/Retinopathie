@@ -16,6 +16,8 @@ class Screening(Base):
     ai_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
     image_quality: Mapped[str | None] = mapped_column(String(30), nullable=True)
     retinal_image_valid: Mapped[bool | None] = mapped_column(nullable=True)
+    ai_recommendations: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ai_patient_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     diagnosis: Mapped[str | None] = mapped_column(String(30), nullable=True)
     diagnosis_status: Mapped[str] = mapped_column(String(30), nullable=False, default="pending_review")
     diagnosis_note: Mapped[str | None] = mapped_column(Text, nullable=True)
