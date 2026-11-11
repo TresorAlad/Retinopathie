@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
@@ -9,11 +8,6 @@ abstract final class ImageUtils {
   /// et ré-encode l'image au format PNG en mémoire.
   static Future<Uint8List> convertToPng(Uint8List rawBytes) async {
     return compute(_processImageToPng, rawBytes);
-  }
-
-  /// Encode les octets PNG en chaîne Base64 pure (sans préfixe data:).
-  static Future<String> encodeToBase64(Uint8List pngBytes) async {
-    return compute(_encodeBase64Isolate, pngBytes);
   }
 
   /// Fonction isolée de conversion en PNG avec préservation d'orientation.
@@ -30,10 +24,5 @@ abstract final class ImageUtils {
     // Encodage strict au format PNG
     final pngBytes = img.encodePng(orientedImage);
     return Uint8List.fromList(pngBytes);
-  }
-
-  /// Fonction isolée d'encodage Base64
-  static String _encodeBase64Isolate(Uint8List bytes) {
-    return base64Encode(bytes);
   }
 }

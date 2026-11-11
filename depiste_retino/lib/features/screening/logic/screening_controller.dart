@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../../../core/utils/image_utils.dart';
+
 import '../../../core/utils/scroll_utils.dart';
 import '../../../core/utils/validators.dart';
 import '../data/models/screening_request.dart';
@@ -14,8 +16,12 @@ import 'camera_manager.dart';
 /// Centralise l'état du formulaire, la capture photo, l'envoi vers l'API et les requêtes de défilement.
 class ScreeningController extends ChangeNotifier {
   // Contrôleurs de formulaire
-  final TextEditingController nomController = TextEditingController(text: 'Dupont');
-  final TextEditingController prenomController = TextEditingController(text: 'Camille');
+  final TextEditingController nomController = TextEditingController(
+    text: 'Dupont',
+  );
+  final TextEditingController prenomController = TextEditingController(
+    text: 'Camille',
+  );
   final TextEditingController ageController = TextEditingController(text: '34');
   String? _sexe = 'femme';
 
@@ -31,6 +37,8 @@ class ScreeningController extends ChangeNotifier {
   bool _isDone = false;
   ScreeningResult? _result;
   ScreeningError? _error;
+  String? _lastPatientKey;
+  String? _lastPatientCode;
 
   // Dépendances de logique
   late final CameraManager camera;
@@ -40,9 +48,8 @@ class ScreeningController extends ChangeNotifier {
   final StreamController<ScrollTarget> _scrollController =
       StreamController<ScrollTarget>.broadcast();
 
-  ScreeningController({
-    ScreeningApiService? apiService,
-  }) : _apiService = apiService ?? ScreeningApiService() {
+  ScreeningController({ScreeningApiService? apiService})
+    : _apiService = apiService ?? ScreeningApiService() {
     camera = CameraManager(onStateChanged: notifyListeners);
 
     // Écoute des champs de saisie pour effacer les erreurs au fur et à mesure de la frappe
@@ -88,6 +95,7 @@ class ScreeningController extends ChangeNotifier {
     if (!camera.isInitialized || _isCapturing || _isSending) return;
 
     _isCapturing = true;
+    _error = null;
     notifyListeners();
 
     try {
@@ -98,6 +106,8 @@ class ScreeningController extends ChangeNotifier {
         _isDone = false;
         _scrollController.add(ScrollTarget.preview);
       }
+    } on CaptureFailedException {
+      _error = ScreeningError.captureFailed;
     } finally {
       _isCapturing = false;
       notifyListeners();
@@ -153,15 +163,25 @@ class ScreeningController extends ChangeNotifier {
     _scrollController.add(ScrollTarget.loading);
 
     try {
-      // 2. Encodage en Base64 dans un isolate
-      final base64Image = await ImageUtils.encodeToBase64(_photoBytes!);
+      final age = int.parse(ageController.text.trim());
+      final patientKey = jsonEncode([
+        nomController.text.trim().toLowerCase(),
+        prenomController.text.trim().toLowerCase(),
+        age,
+        _sexe!.trim().toLowerCase(),
+      ]);
+      if (patientKey != _lastPatientKey) {
+        _lastPatientKey = patientKey;
+        _lastPatientCode = ScreeningRequest.generatePatientCode();
+      }
 
       final request = ScreeningRequest(
         nom: nomController.text,
         prenom: prenomController.text,
-        age: int.parse(ageController.text.trim()),
+        age: age,
         sexe: _sexe!,
-        photoBase64: base64Image,
+        imagePng: _photoBytes!,
+        patientCode: _lastPatientCode!,
       );
 
       // 3. Appel de l'API avec délai maximal de 60s

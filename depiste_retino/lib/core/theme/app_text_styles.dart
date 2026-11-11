@@ -2,17 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Définitions typographiques complètes avec la police Plus Jakarta Sans.
-/// Conforme aux spécifications : height = lineHeight / fontSize, letterSpacing = em * fontSize,
-/// distribution équitable de la ligne.
 abstract final class AppTextStyles {
-  // Styles de base
   static TextStyle get headlineLgMobile => GoogleFonts.plusJakartaSans(
         fontSize: 26.0,
         height: 34.0 / 26.0,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.015 * 26.0,
         color: AppColors.onSurface,
+      ).copyWith(
         leadingDistribution: TextLeadingDistribution.even,
       );
 
@@ -22,6 +19,7 @@ abstract final class AppTextStyles {
         fontWeight: FontWeight.w600,
         letterSpacing: -0.01 * 22.0,
         color: AppColors.onSurface,
+      ).copyWith(
         leadingDistribution: TextLeadingDistribution.even,
       );
 
@@ -31,6 +29,7 @@ abstract final class AppTextStyles {
         fontWeight: FontWeight.w600,
         letterSpacing: 0.0,
         color: AppColors.onSurface,
+      ).copyWith(
         leadingDistribution: TextLeadingDistribution.even,
       );
 
@@ -40,6 +39,7 @@ abstract final class AppTextStyles {
         fontWeight: FontWeight.w600,
         letterSpacing: 0.0,
         color: AppColors.onSurface,
+      ).copyWith(
         leadingDistribution: TextLeadingDistribution.even,
       );
 
@@ -49,6 +49,7 @@ abstract final class AppTextStyles {
         fontWeight: FontWeight.w600,
         letterSpacing: 0.0,
         color: AppColors.onSurface,
+      ).copyWith(
         leadingDistribution: TextLeadingDistribution.even,
       );
 
@@ -58,6 +59,7 @@ abstract final class AppTextStyles {
         fontWeight: FontWeight.w700,
         letterSpacing: 0.02 * 12.0,
         color: AppColors.onSurface,
+      ).copyWith(
         leadingDistribution: TextLeadingDistribution.even,
       );
 
@@ -67,6 +69,7 @@ abstract final class AppTextStyles {
         fontWeight: FontWeight.w400,
         letterSpacing: 0.0,
         color: AppColors.onSurface,
+      ).copyWith(
         leadingDistribution: TextLeadingDistribution.even,
       );
 
@@ -76,6 +79,7 @@ abstract final class AppTextStyles {
         fontWeight: FontWeight.w500,
         letterSpacing: 0.0,
         color: AppColors.onSurface,
+      ).copyWith(
         leadingDistribution: TextLeadingDistribution.even,
       );
 }

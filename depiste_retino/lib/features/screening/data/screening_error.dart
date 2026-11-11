@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
+
 import '../../../core/constants/app_strings.dart';
 
-/// Typologie des 3 erreurs d'analyse prévues par le cahier des charges.
+/// Typologie des erreurs d'analyse et de capture.
 enum ScreeningError {
   /// Aucune connexion Internet disponible sur le terminal.
   noConnection,
@@ -11,7 +12,10 @@ enum ScreeningError {
   serverUnavailable,
 
   /// Délai maximal d'attente de 60 secondes dépassé.
-  timeout;
+  timeout,
+
+  /// La prise de vue ou sa conversion en PNG a échoué.
+  captureFailed;
 
   /// Libellé textuel officiel en français à afficher dans la bannière.
   String get message {
@@ -22,6 +26,8 @@ enum ScreeningError {
         return AppStrings.errServer;
       case ScreeningError.timeout:
         return AppStrings.errTimeout;
+      case ScreeningError.captureFailed:
+        return AppStrings.errCapture;
     }
   }
 
@@ -34,6 +40,8 @@ enum ScreeningError {
         return Symbols.cloud_off;
       case ScreeningError.timeout:
         return Symbols.schedule;
+      case ScreeningError.captureFailed:
+        return Symbols.no_photography;
     }
   }
 }

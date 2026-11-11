@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_dimens.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import 'package:depiste_retino/core/constants/app_dimens.dart';
+import 'package:depiste_retino/core/theme/app_text_styles.dart';
 
-/// Badge contextuel au profil pilule pour afficher les statuts et certifications.
 class StatusBadge extends StatelessWidget {
   final String label;
   final Color backgroundColor;

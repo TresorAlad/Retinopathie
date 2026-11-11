@@ -41,9 +41,30 @@ Le parcours se déroule intégralement sur un **écran unique défilant** :
    - Une mention de sécurité rappelle le caractère chiffré et sécurisé de la transmission.
    - En bas d'écran, l'avertissement médical rappelle que ce dépistage ne remplace pas une consultation ophtalmologique.
 
+## 3. Contrat de transmission mobile
+
+L'application envoie une requête `multipart/form-data` à
+`POST {API_BASE_URL}/api/v1/mobile/scan`. Les champs `first_name` et
+`last_name` contiennent les valeurs saisies sans espaces de début ou de fin.
+Un `patient_code` est généré pour un patient au premier envoi de la session :
+`M-` suivi de 8 caractères aléatoires parmi `A-Z0-9`. Le code est réutilisé
+tant que les quatre champs normalisés (nom, prénom, âge, sexe) restent
+identiques. L'âge (`age`) et le sexe (`sexe`) sont transmis comme
+champs supplémentaires ; le backend actuel les ignore. La date de naissance
+n'est pas envoyée car l'application ne la collecte pas. La photo est envoyée
+comme fichier `image`, `photo.png`, de type `image/png`, après sa conversion
+PNG existante.
+
+L'URL de base et la clé facultative sont injectées au lancement avec
+`API_BASE_URL` et `API_KEY`. L'API utilise `X-Mobile-Api-Key` lorsque la clé
+n'est pas vide. Le client attend un JSON contenant `patient_message` et
+affiche uniquement ce texte. Une réponse `200` avec `is_eye: false` indique que
+l'image n'est pas reconnue comme un œil ; un `503` indique notamment que le
+service IA est indisponible.
+
 ---
 
-## 3. Règles de validation des champs
+## 4. Règles de validation des champs
 
 La validation est déclenchée lors du clic sur le bouton **« Analyser »** :
 
@@ -63,7 +84,7 @@ La validation est déclenchée lors du clic sur le bouton **« Analyser »** :
 
 ---
 
-## 4. États de l'écran et gestion des erreurs
+## 5. États de l'écran et gestion des erreurs
 
 L'application gère 4 états principaux :
 
@@ -71,6 +92,7 @@ L'application gère 4 états principaux :
 - Les champs sont accessibles en saisie.
 - Le flux caméra s'affiche en direct. L'obturateur est disponible.
 - Si l'accès à la caméra est refusé par l'utilisateur, un message clair s'affiche dans le viseur avec un bouton « Autoriser la caméra » (ou « Ouvrir les réglages »).
+- Si l'initialisation de la caméra échoue, le message d'erreur est suivi d'un bouton « Réessayer » qui relance l'initialisation. Si aucune caméra n'est disponible, le message correspondant reste sans bouton.
 
 ### 4.2. État photo prête (Aperçu)
 - La photo capturée apparaît dans un cadre arrondi 16/10.
@@ -83,13 +105,14 @@ L'application gère 4 états principaux :
 
 ### 4.4. État résultat ou erreur
 - **En cas de succès :** Affichage de la carte « Bilan global unifié » avec le texte explicatif de l'API et l'horodatage.
+- **En cas d'échec de capture ou de conversion PNG :** Affichage du message « La photo n'a pas pu être prise. Veuillez réessayer. » ; une photo précédente, si présente, est conservée.
 - **En cas de perte réseau :** Bannière rouge *« Pas de connexion »*. La photo est conservée pour permettre de retenter l'analyse dès le rétablissement de la connexion.
 - **En cas de panne serveur ou réponse invalide :** Bannière rouge *« Serveur indisponible »*. La photo est conservée.
 - **En cas de délai de 60 secondes dépassé :** Bannière rouge *« Le délai d'attente est dépassé. Veuillez reprendre la photo. »*. La photo est automatiquement effacée et l'écran remonte au viseur pour imposer une nouvelle prise de vue fraîche.
 
 ---
 
-## 5. Ce que l'application ne fait volontairement PAS
+## 6. Ce que l'application ne fait volontairement PAS
 
 Afin de garantir une ergonomie simple, une étanchéité absolue des données et le respect du cahier des charges :
 1. **Aucun stockage local :** Ni les noms, ni les photos, ni les résultats ne sont enregistrés sur le téléphone après la fermeture.

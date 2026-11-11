@@ -1,13 +1,11 @@
 import 'dart:io';
+
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../../core/utils/image_utils.dart';
+import 'package:depiste_retino/core/utils/image_utils.dart';
 
-/// Gestionnaire de la caméra physique, de ses permissions et de son cycle de vie.
-/// Conforme à l'ensemble des règles de prise de vue et de sécurité du cahier des charges.
 class CameraManager with WidgetsBindingObserver {
   CameraController? _controller;
   List<CameraDescription> _availableCameras = [];
@@ -15,11 +13,14 @@ class CameraManager with WidgetsBindingObserver {
 
   bool _isInitialized = false;
   bool _isSwitching = false;
+  bool _isInitializing = false;
+  bool _isTakingPicture = false;
   bool _isFlashOn = false;
-  bool _hasFlashSupport = true;
+  bool _hasFlashSupport = false;
   bool _isPermissionDenied = false;
   bool _isPermanentlyDenied = false;
   bool _hasCameraError = false;
+  bool _hasNoCamera = false;
 
   final VoidCallback onStateChanged;
 
@@ -27,27 +28,73 @@ class CameraManager with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
   }
 
-  // Getters d'état
   CameraController? get controller => _controller;
-  bool get isInitialized => _isInitialized && _controller != null && _controller!.value.isInitialized;
+  bool get isInitialized =>
+      _isInitialized && _controller != null && _controller!.value.isInitialized;
   bool get isSwitching => _isSwitching;
+  bool get isInitializing => _isInitializing;
   bool get isFlashOn => _isFlashOn;
   bool get hasFlashSupport => _hasFlashSupport && !isFrontCamera;
   bool get isPermissionDenied => _isPermissionDenied;
   bool get isPermanentlyDenied => _isPermanentlyDenied;
   bool get hasCameraError => _hasCameraError;
-  bool get canSwitchCamera => _availableCameras.length > 1 && !_isSwitching;
+  bool get hasNoCamera => _hasNoCamera;
 
-  /// Indique si la caméra active actuelle est la caméra avant
-  bool get isFrontCamera {
-    if (_availableCameras.isEmpty || _currentCameraIndex >= _availableCameras.length) {
-      return false;
+  CameraDescription? get primaryBackCamera {
+    try {
+      return _availableCameras.firstWhere(
+        (cam) => cam.lensDirection == CameraLensDirection.back,
+      );
+    } catch (_) {
+      return null;
     }
-    return _availableCameras[_currentCameraIndex].lensDirection == CameraLensDirection.front;
   }
 
-  /// Initialise la caméra au démarrage de la page après vérification de la permission
+  CameraDescription? get primaryFrontCamera {
+    try {
+      return _availableCameras.firstWhere(
+        (cam) => cam.lensDirection == CameraLensDirection.front,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool get canSwitchCamera {
+    if (_isSwitching) return false;
+    return (primaryBackCamera != null && primaryFrontCamera != null) ||
+        _availableCameras.length > 1;
+  }
+
+  bool get isFrontCamera {
+    if (_availableCameras.isEmpty ||
+        _currentCameraIndex >= _availableCameras.length) {
+      return false;
+    }
+    return _availableCameras[_currentCameraIndex].lensDirection ==
+        CameraLensDirection.front;
+  }
+
   Future<void> initialize() async {
+    if (_isInitializing) return;
+    _isInitializing = true;
+    _hasCameraError = false;
+    _hasNoCamera = false;
+    onStateChanged();
+    try {
+      await _initializeWithPermission();
+    } catch (error) {
+      debugPrint('[CameraManager] Erreur d’initialisation caméra: $error');
+      _isInitialized = false;
+      _hasCameraError = true;
+      onStateChanged();
+    } finally {
+      _isInitializing = false;
+      onStateChanged();
+    }
+  }
+
+  Future<void> _initializeWithPermission() async {
     final status = await Permission.camera.status;
     if (status.isGranted) {
       await _initCameras();
@@ -67,86 +114,153 @@ class CameraManager with WidgetsBindingObserver {
     }
   }
 
-  /// Recherche les caméras disponibles et initialise la caméra avant par défaut
+  Future<void> retryInitialization() async {
+    if (_isInitializing) return;
+    _isInitializing = true;
+    _hasCameraError = false;
+    _hasNoCamera = false;
+    _isPermissionDenied = false;
+    _isPermanentlyDenied = false;
+    _isInitialized = false;
+    final oldController = _controller;
+    _controller = null;
+    onStateChanged();
+    try {
+      await oldController?.dispose();
+      await _initializeWithPermission();
+    } catch (error) {
+      debugPrint('[CameraManager] Erreur de nouvelle tentative caméra: $error');
+      _isInitialized = false;
+      _hasCameraError = true;
+      onStateChanged();
+    } finally {
+      _isInitializing = false;
+      onStateChanged();
+    }
+  }
+
   Future<void> _initCameras() async {
     try {
       _availableCameras = await availableCameras();
       if (_availableCameras.isEmpty) {
-        _hasCameraError = true;
+        _hasNoCamera = true;
         _isInitialized = false;
         onStateChanged();
         return;
       }
 
-      // Sélection prioritaire de la caméra avant si elle existe
-      final frontIndex = _availableCameras.indexWhere(
-        (cam) => cam.lensDirection == CameraLensDirection.front,
-      );
-      _currentCameraIndex = frontIndex != -1 ? frontIndex : 0;
+      final front = primaryFrontCamera;
+      if (front != null) {
+        _currentCameraIndex = _availableCameras.indexOf(front);
+      } else {
+        _currentCameraIndex = 0;
+      }
 
       await _setupController(_availableCameras[_currentCameraIndex]);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[CameraManager] Erreur _initCameras: $e');
       _hasCameraError = true;
+      _hasNoCamera = false;
       _isInitialized = false;
       onStateChanged();
     }
   }
 
-  /// Configure et démarre le contrôleur de la caméra choisie
   Future<void> _setupController(CameraDescription cameraDescription) async {
     final oldController = _controller;
+    _controller = null;
     if (oldController != null) {
-      await oldController.dispose();
-      _controller = null;
+      try {
+        await oldController.dispose();
+      } catch (_) {}
     }
 
-    final newController = CameraController(
+    CameraController newController = CameraController(
       cameraDescription,
-      ResolutionPreset.veryHigh,
+      ResolutionPreset.high,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
 
     try {
       await newController.initialize();
-      // Verrouillage de l'orientation de capture en mode portrait
-      await newController.lockCaptureOrientation(DeviceOrientation.portraitUp);
-
-      _controller = newController;
-      _isInitialized = true;
-      _hasCameraError = false;
-      _isPermissionDenied = false;
-      _isPermanentlyDenied = false;
-      _isFlashOn = false;
-      _hasFlashSupport = true;
-    } catch (_) {
-      _hasCameraError = true;
-      _isInitialized = false;
+    } catch (e) {
+      try {
+        await newController.dispose();
+      } catch (_) {}
+      newController = CameraController(
+        cameraDescription,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+      try {
+        await newController.initialize();
+      } catch (_) {
+        try {
+          await newController.dispose();
+        } catch (_) {}
+        rethrow;
+      }
     }
+
+    try {
+      await newController.lockCaptureOrientation(DeviceOrientation.portraitUp);
+    } catch (_) {}
+
+    _controller = newController;
+    _isInitialized = true;
+    _hasCameraError = false;
+    _hasNoCamera = false;
+    _isPermissionDenied = false;
+    _isPermanentlyDenied = false;
+    _isFlashOn = false;
+    _hasFlashSupport =
+        (cameraDescription.lensDirection == CameraLensDirection.back);
 
     onStateChanged();
   }
 
-  /// Bascule entre la caméra avant et arrière
   Future<void> switchCamera() async {
-    if (!canSwitchCamera || !isInitialized) return;
+    if (!canSwitchCamera) return;
 
     _isSwitching = true;
     _isFlashOn = false;
     onStateChanged();
 
     try {
-      _currentCameraIndex = (_currentCameraIndex + 1) % _availableCameras.length;
-      await _setupController(_availableCameras[_currentCameraIndex]);
+      CameraDescription? targetCamera;
+
+      if (isFrontCamera) {
+        targetCamera = primaryBackCamera;
+      } else {
+        targetCamera = primaryFrontCamera;
+      }
+
+      if (targetCamera == null && _availableCameras.isNotEmpty) {
+        final nextIdx = (_currentCameraIndex + 1) % _availableCameras.length;
+        targetCamera = _availableCameras[nextIdx];
+      }
+
+      if (targetCamera != null) {
+        _currentCameraIndex = _availableCameras.indexOf(targetCamera);
+        await _setupController(targetCamera);
+      }
+    } catch (e) {
+      debugPrint('[CameraManager] Erreur switchCamera: $e');
+      _isInitialized = false;
+      _hasCameraError = true;
+      onStateChanged();
     } finally {
       _isSwitching = false;
       onStateChanged();
     }
   }
 
-  /// Active ou désactive le flash (mode torche) sur la caméra arrière
   Future<void> toggleFlash() async {
-    if (_controller == null || !_isInitialized || isFrontCamera || !_hasFlashSupport) {
+    if (_controller == null ||
+        !_isInitialized ||
+        isFrontCamera ||
+        !_hasFlashSupport) {
       return;
     }
 
@@ -155,43 +269,45 @@ class CameraManager with WidgetsBindingObserver {
       await _controller!.setFlashMode(newMode);
       _isFlashOn = (newMode == FlashMode.torch);
     } catch (_) {
-      // Si le matériel ne supporte pas le mode torche, repli silencieux
       _isFlashOn = false;
       _hasFlashSupport = false;
     }
     onStateChanged();
   }
 
-  /// Déclenche la prise de vue, lit les données brutes, supprime immédiatement
-  /// le fichier temporaire du disque et convertit l'image en PNG en mémoire.
   Future<Uint8List?> capturePhoto() async {
-    if (_controller == null || !_isInitialized) return null;
+    if (_controller == null || !_isInitialized || _isTakingPicture) return null;
 
+    _isTakingPicture = true;
+    File? tempFile;
     try {
       final xFile = await _controller!.takePicture();
-      final tempFile = File(xFile.path);
-
-      // Lecture intégrale des octets en mémoire
+      tempFile = File(xFile.path);
       final rawBytes = await tempFile.readAsBytes();
 
-      // Suppression immédiate et silencieuse du fichier temporaire du disque
       try {
         if (await tempFile.exists()) {
           await tempFile.delete();
+          tempFile = null;
         }
-      } catch (_) {
-        // Suppression silencieuse
-      }
+      } catch (_) {}
 
-      // Conversion en PNG dans un isolate d'arrière-plan avec correction EXIF
       final pngBytes = await ImageUtils.convertToPng(rawBytes);
       return pngBytes;
     } catch (_) {
-      return null;
+      throw CaptureFailedException();
+    } finally {
+      if (tempFile != null) {
+        try {
+          if (await tempFile.exists()) {
+            await tempFile.delete();
+          }
+        } catch (_) {}
+      }
+      _isTakingPicture = false;
     }
   }
 
-  /// Demande la permission ou ouvre les réglages système
   Future<void> requestPermissionOrOpenSettings() async {
     if (_isPermanentlyDenied) {
       await openAppSettings();
@@ -209,25 +325,24 @@ class CameraManager with WidgetsBindingObserver {
     }
   }
 
-  /// Gestion des changements d'état du cycle de vie de l'application
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
-      // Libération des ressources de la caméra quand l'application passe en arrière-plan
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
       _controller?.dispose();
       _controller = null;
       _isInitialized = false;
       onStateChanged();
     } else if (state == AppLifecycleState.resumed) {
-      // Réinitialisation au retour au premier plan (ex: retour des réglages système)
       initialize();
     }
   }
 
-  /// Libération finale des ressources
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
     _controller = null;
   }
 }
+
+class CaptureFailedException implements Exception {}

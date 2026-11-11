@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import '../../../../core/constants/app_dimens.dart';
-import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import 'package:depiste_retino/core/constants/app_dimens.dart';
+import 'package:depiste_retino/core/constants/app_strings.dart';
+import 'package:depiste_retino/core/theme/app_colors.dart';
+import 'package:depiste_retino/core/theme/app_text_styles.dart';
+
 import '../../logic/screening_controller.dart';
 import 'common/app_card.dart';
 import 'common/status_badge.dart';
 import 'pill_text_field.dart';
 
-/// Carte de saisie des informations du patient (Nom, Prénom, Âge, Sexe).
 class PatientInfoCard extends StatelessWidget {
   final ScreeningController controller;
   final GlobalKey? nomKey;
@@ -34,52 +34,54 @@ class PatientInfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // En-tête de la carte
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32.0,
-                    height: 32.0,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryFixed,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Symbols.badge,
-                      size: 18.0,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 10.0),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppStrings.infoTitle,
-                        style: AppTextStyles.labelLg.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.onSurface,
-                        ),
-                      ),
-                      Text(
-                        AppStrings.infoSubtitle,
-                        style: AppTextStyles.bodySm.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              Container(
+                width: 32.0,
+                height: 32.0,
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryFixed,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Symbols.badge,
+                  size: 18.0,
+                  color: AppColors.primary,
+                ),
               ),
-              StatusBadge(
+              const SizedBox(width: 10.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.infoTitle,
+                      style: AppTextStyles.labelLg.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      AppStrings.infoSubtitle,
+                      style: AppTextStyles.bodySm.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8.0),
+              const StatusBadge(
                 label: AppStrings.confidential,
                 backgroundColor: AppColors.surfaceContainer,
                 foregroundColor: AppColors.onSurfaceVariant,
-                padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-                icon: const Icon(
+                padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                icon: Icon(
                   Symbols.lock,
                   size: 14.0,
                   color: AppColors.secondary,
@@ -88,11 +90,8 @@ class PatientInfoCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppDimens.cardSpacing),
-
-          // Liste des 4 champs obligatoires
           Column(
             children: [
-              // 1. Nom
               Container(
                 key: nomKey,
                 child: PillTextField(
@@ -106,8 +105,6 @@ class PatientInfoCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppDimens.fieldSpacing),
-
-              // 2. Prénom
               Container(
                 key: prenomKey,
                 child: PillTextField(
@@ -121,8 +118,6 @@ class PatientInfoCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppDimens.fieldSpacing),
-
-              // 3. Âge
               Container(
                 key: ageKey,
                 child: PillTextField(
@@ -136,8 +131,6 @@ class PatientInfoCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppDimens.fieldSpacing),
-
-              // 4. Sexe
               Container(
                 key: sexeKey,
                 child: PillDropdownField(

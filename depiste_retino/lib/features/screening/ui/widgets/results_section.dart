@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_shadows.dart';
@@ -109,11 +110,7 @@ class ResultsSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Symbols.lock,
-                size: 18.0,
-                color: AppColors.secondary,
-              ),
+              const Icon(Symbols.lock, size: 18.0, color: AppColors.secondary),
               const SizedBox(width: 8.0),
               Flexible(
                 child: RichText(
@@ -122,15 +119,15 @@ class ResultsSection extends StatelessWidget {
                     style: AppTextStyles.bodySm.copyWith(
                       color: AppColors.onSurfaceVariant,
                     ),
-                    children: [
+                    children: const [
                       TextSpan(
                         text: '${AppStrings.secureBold} ',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.onSurface,
                         ),
                       ),
-                      const TextSpan(text: AppStrings.secureRest),
+                      TextSpan(text: AppStrings.secureRest),
                     ],
                   ),
                 ),

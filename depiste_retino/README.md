@@ -1,17 +1,23 @@
-# depiste_retino
+# Dépiste Retino — application Flutter
 
-A new Flutter project.
+## Lancer l'application connectée au backend
 
-## Getting Started
+Depuis le dossier `depiste_retino/` :
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run --dart-define=API_BASE_URL=https://<lien-ngrok> --dart-define=API_KEY=<clé>
+```
 
-A few resources to get you started if this is your first Flutter project:
+Remplacer les valeurs entre chevrons par l'URL HTTPS ngrok active et la clé
+transmise en privé. La clé peut être omise uniquement si le backend autorise
+explicitement l'accès sans clé. Aucune valeur réelle ne doit être inscrite dans
+le dépôt.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+L'API cible `POST /api/v1/mobile/scan` et attend du `multipart/form-data`.
+Voir [la documentation d'intégration](docs/API_INTEGRATION.md) pour le contrat,
+l'exemple `curl` et la checklist de validation.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**Sécurité :** une clé d'API embarquée dans une application mobile est
+extractible. `--dart-define` évite de versionner la clé, mais ne la rend pas
+secrète dans l'application compilée.

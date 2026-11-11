@@ -1,6 +1,7 @@
 import 'dart:math' as math;
-import 'dart:ui';
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 
 /// Dessinateur vectoriel pour le schéma de centrage des deux yeux et les repères anatomiques.
@@ -8,9 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 class ViewfinderOverlayPainter extends CustomPainter {
   final double pulseOpacity;
 
-  const ViewfinderOverlayPainter({
-    required this.pulseOpacity,
-  });
+  const ViewfinderOverlayPainter({required this.pulseOpacity});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -41,7 +40,13 @@ class ViewfinderOverlayPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    _drawDashedPath(canvas, rectPath, rectPaint, dashWidth: 6.0, dashSpace: 6.0);
+    _drawDashedPath(
+      canvas,
+      rectPath,
+      rectPaint,
+      dashWidth: 6.0,
+      dashSpace: 6.0,
+    );
 
     // 2. Repères oeil gauche (centre : 82, 72)
     _drawEyeTarget(canvas, const Offset(82.0, 72.0));
@@ -83,7 +88,13 @@ class ViewfinderOverlayPainter extends CustomPainter {
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
-    _drawDashedPath(canvas, outerPath, outerPaint, dashWidth: 4.0, dashSpace: 4.0);
+    _drawDashedPath(
+      canvas,
+      outerPath,
+      outerPaint,
+      dashWidth: 4.0,
+      dashSpace: 4.0,
+    );
 
     // Cercle intermédiaire plein rayon 12
     final midPaint = Paint()

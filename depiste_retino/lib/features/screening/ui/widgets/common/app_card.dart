@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_dimens.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_shadows.dart';
+import 'package:depiste_retino/core/constants/app_dimens.dart';
+import 'package:depiste_retino/core/theme/app_colors.dart';
+import 'package:depiste_retino/core/theme/app_shadows.dart';
 
-/// Conteneur carte blanc standard de l'application (rayon 32px, ombre douce).
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;

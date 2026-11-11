@@ -45,10 +45,37 @@
 
 ---
 
-## 3. Points d'attention produit essentiels
+## 3. Intégration au backend mobile
+
+| N° | Décision retenue | Raison technique |
+|---|---|---|
+| **API1** | Envoi en `multipart/form-data` sur `/api/v1/mobile/scan` | La route backend attend les champs de formulaire et un fichier `image`, pas un JSON avec une photo Base64. |
+| **API2** | Envoyer la photo PNG comme `image` / `photo.png` (`image/png`) | Conserver la conversion PNG existante tout en respectant le contrat du champ fichier. |
+| **API3** | Créer un `patient_code` de forme `M-` + 8 caractères aléatoires `A-Z0-9` et le réutiliser pour les envois de la session ayant les mêmes champs normalisés | Le backend identifie un patient par code unique ; la réutilisation évite un nouveau dossier à chaque scan du même patient dans la session. |
+| **API4** | Envoyer l'âge et le sexe comme champs multipart supplémentaires, ne pas envoyer `birth_date` | L'âge et le sexe sont connus du client et la route actuelle ignore les champs supplémentaires ; l'application ne connaît pas la date de naissance. |
+| **API5** | Lire uniquement `patient_message` ; ne pas interpréter `is_eye`, le stade ou la blockchain | L'interface conserve son résultat textuel existant et laisse l'analyse métier au serveur. |
+| **API6** | Injecter l'URL et la clé avec `--dart-define`; utiliser `X-Mobile-Api-Key` sans préfixe | L'URL ngrok change et les secrets ne doivent pas être enregistrés dans le dépôt. Une clé intégrée à une application mobile reste toutefois extractible. |
+| **API7** | Ne pas définir manuellement `Content-Type` et ajouter `ngrok-skip-browser-warning: true` | `MultipartRequest` doit générer le type multipart avec sa frontière ; l'en-tête complémentaire permet les appels au tunnel ngrok. |
+| **API8** | Appliquer 60 secondes à la chaîne réseau complète | La vérification de connectivité, l'envoi multipart et la lecture du corps forment une seule opération bornée. |
+| **API9** | Garder le code patient uniquement en mémoire pour la durée de la session | Le code est renouvelé au redémarrage ; aucune donnée d'identité supplémentaire n'est persistée sur l'appareil. |
+| **APP1** | Corriger l'action du bouton d'analyse pour appeler `analyze()` et garder le bouton désactivé pendant l'envoi | Le contrôleur expose `analyze()` et `isSending`; le nom d'action doit correspondre à l'API réelle du contrôleur. |
+| **APP2** | Supprimer le test widget de compteur obsolète | Le test ne correspond plus à l'application et le cahier des charges interdit les tests automatisés. |
+| **APP3** | Permettre de relancer l'initialisation caméra après une erreur, sans bouton si aucune caméra n'existe | Distinguer une panne réessayable de l'absence de matériel. |
+| **APP4** | Représenter un échec réel de prise de vue/conversion par `CaptureFailedException` et `ScreeningError.captureFailed` | L'utilisateur voit l'échec sans perdre une éventuelle photo précédente. |
+| **APP5** | Arrêter les animations répétées lorsque les animations sont désactivées et les relancer à leur réactivation | Respecter le réglage d'accessibilité sans modifier l'apparence statique. |
+
+---
+
+## 4. Points d'attention produit essentiels
 
 L'équipe projet doit garder à l'esprit les spécificités suivantes :
 1. **Caractère statique des mentions de sécurité :**  
    Les mentions *« Confidentiel »*, *« IA Santé v2.4 »*, *« Résultat enregistré en toute sécurité. Données médicales chiffrées de bout en bout sur votre appareil »* et l'icône verte `verified` sont issues de la maquette et affichées de manière statique. L'application mobile n'effectue **aucun chiffrement asymétrique local** (la sécurité repose sur le canal HTTPS) et n'évalue pas médicalement la gravité du diagnostic.
 2. **Texte médical direct :**  
    L'application affiche mot pour mot le contenu renvoyé par l'API sans chercher à l'interpréter, à le résumer ou à lui attribuer une couleur de gravité.
+
+### Limite connue — code patient
+
+Après un redémarrage de l'application, le même patient reçoit un nouveau code
+et peut donc créer un nouveau dossier côté backend. Une solution définitive
+demande une décision produit avec l'équipe backend.

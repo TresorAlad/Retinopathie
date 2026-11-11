@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -19,12 +20,12 @@ class IntroSection extends StatelessWidget {
           // Ligne de badges contextuels
           Row(
             children: [
-              StatusBadge(
+              const StatusBadge(
                 label: AppStrings.badgeKind,
                 backgroundColor: AppColors.secondaryContainer,
                 foregroundColor: AppColors.onSecondaryContainer,
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-                icon: const Icon(
+                padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+                icon: Icon(
                   Symbols.spa,
                   size: 15.0,
                   color: AppColors.onSecondaryContainer,
@@ -36,7 +37,10 @@ class IntroSection extends StatelessWidget {
                 label: AppStrings.badgeVersion,
                 backgroundColor: AppColors.surfaceContainerHigh,
                 foregroundColor: AppColors.onSurfaceVariant,
-                padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10.0,
+                  vertical: 4.0,
+                ),
                 icon: Container(
                   width: 6.0,
                   height: 6.0,

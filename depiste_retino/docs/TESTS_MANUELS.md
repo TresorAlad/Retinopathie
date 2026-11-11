@@ -5,6 +5,27 @@
 
 ---
 
+## Scénarios d'intégration API
+
+Exécuter l'application avec l'URL HTTPS ngrok et la clé fournie en privé.
+Vérifier que ni les données patient, ni la photo, ni la clé ne sont écrites
+dans les journaux de l'application.
+
+| Scénario | Étapes | Résultat attendu |
+|---|---|---|
+| Configuration multipart valide | Envoyer une photo PNG avec nom, prénom, âge et sexe ; inspecter l'appel côté serveur. | `POST /api/v1/mobile/scan`, champs `patient_code`, `first_name`, `last_name`, `age`, `sexe`, fichier `image` nommé `photo.png` avec `image/png`; en-tête `X-Mobile-Api-Key` si configuré ; pas de `Content-Type` défini manuellement. |
+| Code patient stable pendant la session | Envoyer deux scans en gardant les mêmes nom, prénom, âge et sexe normalisés. | Les deux envois réutilisent le même code `M-` + 8 caractères `A-Z0-9`. |
+| Résultat œil reconnu | Envoyer une image d'œil lorsque le service IA est disponible. | Réponse `200`; `patient_message` non vide affiché. Les autres champs de réponse ne modifient pas l'interface. |
+| Image non reconnue comme un œil | Envoyer une image rejetée par le service IA. | Le backend répond `200` avec `is_eye: false` et un `patient_message`; le client affiche ce message comme résultat. |
+| Authentification invalide | Utiliser une clé incorrecte ou absente sur un serveur qui en exige une. | Réponse hors 2xx traitée comme « Serveur indisponible » ; photo conservée. |
+| Service IA indisponible | Arrêter ou rendre inaccessible le service IA, puis envoyer une image. | Backend en `503`; l'application affiche « Serveur indisponible » et conserve la photo. |
+| Réponse invalide | Faire renvoyer un JSON invalide, un JSON sans `patient_message`, ou un message vide. | « Serveur indisponible » ; photo conservée. |
+| Expiration globale | Laisser la vérification réseau ou l'appel/lecture HTTP dépasser 60 secondes. | Erreur de délai ; photo effacée et reprise imposée. |
+| Erreur caméra puis réessai | Simuler un échec d'initialisation caméra puis appuyer sur « Réessayer ». | Le contrôleur est réinitialisé et le processus normal de permission et d'initialisation caméra est relancé ; aucune caméra disponible n'affiche toujours aucun bouton. |
+| Échec de capture | Simuler un échec de prise de vue ou de conversion PNG. | La bannière indique « La photo n'a pas pu être prise. Veuillez réessayer. » ; une photo précédente reste inchangée. |
+| Animations désactivées | Activer le réglage système qui désactive les animations et afficher le viseur, l'obturateur et un indicateur animé. | Aucun contrôleur d'animation répétée ne tourne ; l'apparence statique habituelle est conservée. |
+| Changement d'un champ | Modifier chacun des champs du patient entre deux envois, un champ à la fois. | Un `patient_code` nouveau est généré dès qu'un champ normalisé change. |
+
 ## Tableau exhaustif des 33 scénarios de tests manuels
 
 | N° | Scénario testé | Étapes à réaliser | Résultat attendu |

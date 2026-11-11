@@ -1,29 +1,39 @@
+import 'dart:math';
+import 'dart:typed_data';
+
 /// Modèle de requête HTTP envoyé à l'API d'analyse.
-/// Contient les 4 champs obligatoires saisis et l'image PNG encodée en Base64.
+/// Contient les champs du formulaire et l'image PNG à envoyer en multipart.
 final class ScreeningRequest {
   final String nom;
   final String prenom;
   final int age;
   final String sexe;
-  final String photoBase64;
+  final Uint8List imagePng;
+  final String patientCode;
 
-  const ScreeningRequest({
+  ScreeningRequest({
     required this.nom,
     required this.prenom,
     required this.age,
     required this.sexe,
-    required this.photoBase64,
+    required this.imagePng,
+    required this.patientCode,
   });
 
-  /// Convertit la requête au format JSON conforme au cahier des charges.
-  /// Les espaces de début et fin sont préalablement supprimés pour le nom et prénom.
-  Map<String, dynamic> toJson() {
+  /// Construit les champs multipart attendus par l'API.
+  Map<String, String> toMultipartFields() {
     return {
-      'nom': nom.trim(),
-      'prenom': prenom.trim(),
-      'age': age,
+      'patient_code': patientCode,
+      'first_name': prenom.trim(),
+      'last_name': nom.trim(),
+      'age': age.toString(),
       'sexe': sexe,
-      'photo': photoBase64,
     };
+  }
+
+  static String generatePatientCode() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random.secure();
+    return 'M-${List.generate(8, (_) => characters[random.nextInt(characters.length)]).join()}';
   }
 }

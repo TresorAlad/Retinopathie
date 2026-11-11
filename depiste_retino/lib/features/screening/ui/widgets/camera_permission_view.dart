@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
+
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -9,26 +10,31 @@ import 'common/pill_button.dart';
 class CameraPermissionView extends StatelessWidget {
   final bool isPermanentlyDenied;
   final bool hasCameraError;
+  final bool hasNoCamera;
   final VoidCallback onAction;
 
   const CameraPermissionView({
     super.key,
     required this.isPermanentlyDenied,
     required this.hasCameraError,
+    required this.hasNoCamera,
     required this.onAction,
   });
 
   @override
   Widget build(BuildContext context) {
     final String message;
-    if (hasCameraError) {
+    if (hasNoCamera) {
+      message = AppStrings.noCamera;
+    } else if (hasCameraError) {
       message = AppStrings.cameraError;
     } else {
       message = AppStrings.permDenied;
     }
 
-    final String buttonLabel =
-        isPermanentlyDenied ? AppStrings.permSettings : AppStrings.permAllow;
+    final String buttonLabel = isPermanentlyDenied
+        ? AppStrings.permSettings
+        : AppStrings.permAllow;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -48,12 +54,23 @@ class CameraPermissionView extends StatelessWidget {
               color: AppColors.onSurfaceVariant,
             ),
           ),
-          if (!hasCameraError) ...[
+          if (!hasCameraError && !hasNoCamera) ...[
             const SizedBox(height: 12.0),
             PillButton(
               label: buttonLabel,
               onTap: onAction,
               fontWeight: FontWeight.w700,
+            ),
+          ] else if (hasCameraError) ...[
+            const SizedBox(height: 12.0),
+            Semantics(
+              label: AppStrings.semCameraRetry,
+              button: true,
+              child: PillButton(
+                label: AppStrings.cameraRetry,
+                onTap: onAction,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ],

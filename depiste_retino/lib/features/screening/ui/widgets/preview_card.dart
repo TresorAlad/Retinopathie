@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import '../../../../core/constants/app_dimens.dart';
-import '../../../../core/constants/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_shadows.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import 'package:depiste_retino/core/constants/app_dimens.dart';
+import 'package:depiste_retino/core/constants/app_strings.dart';
+import 'package:depiste_retino/core/theme/app_colors.dart';
+import 'package:depiste_retino/core/theme/app_shadows.dart';
+import 'package:depiste_retino/core/theme/app_text_styles.dart';
+
 import '../../logic/screening_controller.dart';
 import 'common/app_card.dart';
 import 'common/pill_button.dart';
 import 'common/pulse_animations.dart';
 import 'common/status_badge.dart';
 
-/// Carte affichant l'aperçu du cliché instantané capturé en mémoire et les actions Reprendre / Analyser.
 class PreviewCard extends StatelessWidget {
   final ScreeningController controller;
 
@@ -25,7 +25,6 @@ class PreviewCard extends StatelessWidget {
     final isSending = controller.isSending;
     final isDone = controller.isDone;
 
-    // Configuration dynamique du bouton Analyser selon son état
     final String analyzeLabel;
     final Widget? analyzeLeading;
     final Widget? analyzeTrailing;
@@ -62,36 +61,36 @@ class PreviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // En-tête de la carte
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 10.0,
-                    height: 10.0,
-                    decoration: const BoxDecoration(
-                      color: AppColors.secondary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8.0),
-                  Text(
-                    AppStrings.previewTitle,
-                    style: AppTextStyles.headlineSm.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.onSurface,
-                    ),
-                  ),
-                ],
+              Container(
+                width: 10.0,
+                height: 10.0,
+                decoration: const BoxDecoration(
+                  color: AppColors.secondary,
+                  shape: BoxShape.circle,
+                ),
               ),
-              StatusBadge(
+              const SizedBox(width: 8.0),
+              Expanded(
+                child: Text(
+                  AppStrings.previewTitle,
+                  style: AppTextStyles.headlineSm.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8.0),
+              const StatusBadge(
                 label: AppStrings.previewBadge,
                 backgroundColor: AppColors.secondaryFixed,
                 foregroundColor: AppColors.onSecondaryFixedVariant,
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-                icon: const Icon(
+                padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                icon: Icon(
                   Symbols.check_circle,
                   size: 14.0,
                   color: AppColors.onSecondaryFixedVariant,
@@ -100,8 +99,6 @@ class PreviewCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppDimens.cardSpacing),
-
-          // Cadre de la photo capturée
           Container(
             constraints: const BoxConstraints(maxHeight: 288.0),
             decoration: BoxDecoration(
@@ -111,66 +108,42 @@ class PreviewCard extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppDimens.innerRadius),
-              child: AspectRatio(
-                aspectRatio: 16 / 10,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.memory(
-                      photoBytes,
-                      fit: BoxFit.cover,
-                      gaplessPlayback: true,
-                    ),
-                    // Dégradé d'ambiance collé au bas du cliché
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      height: 24.0,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              AppColors.photoGradBottom,
-                              AppColors.photoGradMid,
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              child: Image.memory(
+                photoBytes,
+                fit: BoxFit.cover,
+                width: double.infinity,
               ),
             ),
           ),
-          const SizedBox(height: 16.0),
-
-          // Boutons d'action : Reprendre et Analyser
-          Column(
+          const SizedBox(height: AppDimens.cardSpacing),
+          Row(
             children: [
-              PillButton(
-                label: AppStrings.retake,
-                onTap: controller.retakePhoto,
-                variant: PillButtonVariant.secondary,
-                isDisabled: isSending,
-                leadingIcon: const Icon(
-                  Symbols.replay,
-                  size: 20.0,
-                  color: AppColors.onSurface,
+              Expanded(
+                flex: 2,
+                child: PillButton(
+                  label: AppStrings.retake,
+                  onTap: isSending ? null : controller.retakePhoto,
+                  variant: PillButtonVariant.secondary,
+                  leadingIcon: const Icon(
+                    Symbols.refresh,
+                    size: 20.0,
+                    color: AppColors.onSurface,
+                  ),
+                  isDisabled: isSending,
                 ),
               ),
-              const SizedBox(height: 12.0),
-              PillButton(
-                label: analyzeLabel,
-                onTap: controller.analyze,
-                variant: PillButtonVariant.primary,
-                fontWeight: FontWeight.w700,
-                isDisabled: isSending || isDone,
-                leadingIcon: analyzeLeading,
-                trailingIcon: analyzeTrailing,
+              const SizedBox(width: 12.0),
+              Expanded(
+                flex: 3,
+                child: PillButton(
+                  label: analyzeLabel,
+                  onTap: (isSending || isDone) ? null : controller.analyze,
+                  variant: PillButtonVariant.primary,
+                  leadingIcon: analyzeLeading,
+                  trailingIcon: analyzeTrailing,
+                  isLoading: isSending,
+                  isDisabled: isSending || isDone,
+                ),
               ),
             ],
           ),

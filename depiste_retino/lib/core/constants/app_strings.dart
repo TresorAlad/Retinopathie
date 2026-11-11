@@ -4,7 +4,8 @@ abstract final class AppStrings {
   static const String appName = 'Dépiste Retino';
   static const String badgeKind = 'Dépistage bienveillant';
   static const String badgeVersion = 'IA Santé v2.4';
-  static const String introTitle = 'Un petit contrôle de vos yeux, en quelques secondes.';
+  static const String introTitle =
+      'Un petit contrôle de vos yeux, en quelques secondes.';
   static const String introText =
       'Positionnez confortablement votre regard. Nous veillons sur la clarté et la vitalité de vos yeux en une seule prise bienveillante.';
   static const String infoTitle = 'Vos informations';
@@ -38,8 +39,14 @@ abstract final class AppStrings {
       'L\'accès à la caméra est nécessaire pour photographier vos yeux.';
   static const String permAllow = 'Autoriser la caméra';
   static const String permSettings = 'Ouvrir les réglages';
-  static const String noCamera = 'Aucune caméra n\'est disponible sur cet appareil.';
+  static const String noCamera =
+      'Aucune caméra n\'est disponible sur cet appareil.';
   static const String cameraError = 'La caméra n\'a pas pu démarrer.';
+  static const String cameraRetry = 'Réessayer';
+  static const String semCameraRetry =
+      'Réessayer l\'initialisation de la caméra';
+  static const String errCapture =
+      'La photo n\'a pas pu être prise. Veuillez réessayer.';
   static const String previewTitle = 'Cliché instantané';
   static const String previewBadge = 'Prêt pour l\'analyse';
   static const String retake = 'Reprendre';
@@ -48,7 +55,8 @@ abstract final class AppStrings {
   static const String analyzed = 'Analyse terminée';
   static const String loadingTitle = 'Analyse en cours…';
   static const String step1Title = 'Clarté sclérale bilatérale';
-  static const String step1Sub = 'Recherche d\'indices pigmentaires ou jaunâtres sur les deux yeux.';
+  static const String step1Sub =
+      'Recherche d\'indices pigmentaires ou jaunâtres sur les deux yeux.';
   static const String step2Title = 'Reflets et réseau vasculaire';
   static const String step2Sub =
       'Évaluation simultanée de la pâleur et de la fatigue conjonctivale.';
@@ -58,7 +66,8 @@ abstract final class AppStrings {
   static const String resultsLabel = 'BILAN GLOBAL UNIFIÉ';
   static const String today = 'Aujourd\'hui à';
   static const String secureBold = 'Résultat enregistré en toute sécurité.';
-  static const String secureRest = 'Données médicales chiffrées de bout en bout sur votre appareil.';
+  static const String secureRest =
+      'Données médicales chiffrées de bout en bout sur votre appareil.';
   static const String disclaimer =
       'Ce résultat est une aide au dépistage et ne remplace pas un avis médical. En cas de doute, d\'irritation persistante ou de gêne visuelle, parlez-en à votre ophtalmologue ou médecin traitant.';
   static const String errNoConnection = 'Pas de connexion';

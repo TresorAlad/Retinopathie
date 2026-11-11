@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_dimens.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_shadows.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import 'package:depiste_retino/core/constants/app_dimens.dart';
+import 'package:depiste_retino/core/theme/app_colors.dart';
+import 'package:depiste_retino/core/theme/app_shadows.dart';
+import 'package:depiste_retino/core/theme/app_text_styles.dart';
 import 'pressable_scale.dart';
 
 enum PillButtonVariant {
@@ -10,7 +10,6 @@ enum PillButtonVariant {
   secondary,
 }
 
-/// Bouton au profil pilule garantissant une zone tactile minimale de 56px.
 class PillButton extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;

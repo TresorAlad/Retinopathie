@@ -11,9 +11,10 @@ dependencies:
   flutter:
     sdk: flutter
   camera: any
-  permission_handler: any
+  permission_handler: ^11.3.1
   image: any
   http: any
+  http_parser: any
   connectivity_plus: any
   provider: any
   google_fonts: any

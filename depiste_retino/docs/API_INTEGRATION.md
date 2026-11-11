@@ -1,114 +1,115 @@
-# Intégration de l'API d'analyse — Dépiste Retino
+# Intégration de l'API mobile — Dépiste Retino
 
-> **À quoi sert ce document :** Documenter le contrat d'interface HTTP JSON, fournir des exemples concrets d'appels `curl`, récapituler le tableau de correspondance des erreurs et détailler la procédure pas à pas à suivre dès que la documentation officielle de l'API sera disponible.  
-> **Pour qui :** Les développeurs de l'équipe mobile et les ingénieurs backend.
+L'application Flutter transmet la photo et les informations du formulaire à
+l'API backend de dépistage. L'URL ngrok changeante est fournie au lancement
+avec `API_BASE_URL` ; elle n'est pas enregistrée dans le code.
 
----
+## Contrat
 
-## 1. Contrat d'interface provisoire
+- **Méthode et route :** `POST {API_BASE_URL}/api/v1/mobile/scan`
+- **Format :** `multipart/form-data`
+- **Délai maximal :** 60 secondes pour la vérification réseau et l'échange HTTP
+- **Authentification :** en-tête `X-Mobile-Api-Key`, uniquement si `API_KEY`
+  n'est pas vide
+- **Réponse :** JSON ; l'application lit uniquement la chaîne non vide
+  `patient_message`.
 
-L'API d'analyse existant déjà côté serveur mais n'ayant pas encore communiqué ses spécifications définitives, l'application est configurée avec une interface préparée et découplée.
+| Champ multipart | Valeur |
+|---|---|
+| `patient_code` | Obligatoire ; `M-` suivi de 8 caractères aléatoires `A-Z0-9`, réutilisé pour le même patient pendant la session |
+| `first_name` | Prénom saisi, espaces de début et de fin supprimés |
+| `last_name` | Nom saisi, espaces de début et de fin supprimés |
+| `age` | Âge entier (champ supplémentaire ignoré par le backend) |
+| `sexe` | `femme`, `homme` ou `autre` (champ supplémentaire ignoré par le backend) |
+| `image` | PNG, nom de fichier `photo.png`, type MIME `image/png` |
 
-### 1.1. Point de terminaison (Endpoint)
-- **Méthode :** `POST`
-- **URL :** `{baseUrl}{analyzePath}` (par défaut `https://api.example.invalid/analyze`)
-- **Délai maximal (Timeout) :** 60 secondes
-- **Protocole :** HTTPS obligatoire (HTTP possible en développement local avec ajustement du manifest Android)
+`birth_date` n'est pas envoyé : l'application ne connaît que l'âge. Le backend
+accepte JPEG ou PNG, mais l'application transmet la photo convertie en PNG.
+Les champs multipart supplémentaires `age` et `sexe` sont ignorés par la route
+actuelle. Le code patient fait 10 caractères, reste inférieur à la limite de
+50 caractères de la colonne backend et celle-ci est unique.
 
-### 1.2. En-têtes HTTP (Headers)
-```http
-Content-Type: application/json; charset=utf-8
-Accept: application/json
-Authorization: Bearer <API_KEY> (ajouté uniquement si API_KEY n'est pas vide)
-```
+La réponse peut contenir `is_eye`, `stage`, `risk_score` et des champs
+`blockchain_*`, mais le client ne les interprète pas. Pour une image rejetée
+comme n'étant pas un œil, le backend répond tout de même `200` avec
+`is_eye: false` et un `patient_message` ; ce message est celui affiché.
+Une indisponibilité du service IA donne notamment un statut `503`, traité
+comme « Serveur indisponible ».
 
-### 1.3. Format du corps de la requête JSON
-```json
-{
-  "nom": "Dupont",
-  "prenom": "Camille",
-  "age": 34,
-  "sexe": "femme",
-  "photo": "iVBORw0KGgoAAAANSUhEUgAA..."
-}
-```
+## Exemple `curl`
 
-#### Précisions sur les champs envoyés :
-- `nom` *(string)* : Nom de famille du patient, sans espaces résiduels de début ou de fin.
-- `prenom` *(string)* : Prénom du patient, sans espaces résiduels de début ou de fin.
-- `age` *(integer)* : Âge numérique valide entre 1 et 120 (envoyé sous forme d'entier JSON, non de chaîne).
-- `sexe` *(string)* : Valeur normalisée parmi `"femme"`, `"homme"` ou `"autre"`.
-- `photo` *(string)* : Octets de la photo convertie au format PNG, encodés en Base64 standard sans en-tête data URI (pas de `data:image/png;base64,`).
-
-### 1.4. Format de la réponse attendue du serveur
-Le serveur doit renvoyer un statut HTTP 200 OK avec un corps JSON contenant au minimum le champ textuel de résultat :
-
-```json
-{
-  "resultat": "L'analyse simultanée de vos deux yeux confirme une excellente homogénéité globale. La clarté sclérale, la coloration conjonctivale ainsi que les reflets micro-vasculaires se situent dans les normes physiologiques idéales, sans signe d'ictère, d'anémie ou de fatigue excessive détecté."
-}
-```
-
-L'application lit et affiche intégralement le contenu de la clé `resultat` (ou le nom configuré dans `ApiConfig.responseTextKey`), en préservant les sauts de ligne.
-
----
-
-## 2. Exemple d'appel en ligne de commande (`curl`)
-
-Pour tester manuellement la réponse de votre serveur d'analyse depuis votre poste Linux :
+La clé ci-dessous est fictive et ne doit pas être utilisée comme secret réel.
+Le type multipart et sa frontière sont générés par `curl`.
 
 ```bash
-curl -X POST https://api.votre-serveur-sante.fr/analyze \
-  -H "Content-Type: application/json; charset=utf-8" \
+curl -X POST "https://<lien-ngrok>/api/v1/mobile/scan" \
+  -H "X-Mobile-Api-Key: fake-mobile-key-not-a-secret" \
   -H "Accept: application/json" \
-  -H "Authorization: Bearer votre_cle_secrete_provisoire" \
-  -d '{
-    "nom": "Dupont",
-    "prenom": "Camille",
-    "age": 34,
-    "sexe": "femme",
-    "photo": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
-  }'
+  -H "ngrok-skip-browser-warning: true" \
+  -F "patient_code=M-A1B2C3D4" \
+  -F "first_name=Camille" \
+  -F "last_name=Dupont" \
+  -F "age=34" \
+  -F "sexe=femme" \
+  -F "image=@retine.png;type=image/png;filename=photo.png"
 ```
 
----
+Exemple de réponse (les identifiants, valeurs et résultats varient) :
 
-## 3. Checklist « Quand la documentation de l'API arrive »
+```json
+{
+  "screening_id": 1,
+  "patient_id": 1,
+  "is_eye": true,
+  "patient_message": "Signes légers.",
+  "stage": "mild",
+  "risk_score": 0.42,
+  "blockchain_block_index": 1,
+  "blockchain_status": "mobile:1"
+}
+```
 
-Dès réception de la documentation officielle fournie par l'équipe backend, suivez cette liste de vérification point par point :
+## Lancement de l'application
 
-- [ ] **1. Vérifier l'URL de base et l'endpoint :**
-  - Ouvrir `lib/core/config/api_config.dart`.
-  - Mettre à jour `defaultValue` de `baseUrl` ou utiliser l'argument de compilation `--dart-define=API_BASE_URL=https://vrai-serveur.fr`.
-  - Ajuster `analyzePath` si le point de terminaison est différent de `/analyze` (ex: `/api/v1/screening`).
-- [ ] **2. Vérifier la méthode d'authentification :**
-  - Dans `lib/core/config/api_config.dart`, ajuster `authHeaderName` (ex: `X-API-KEY` ou `Authorization`) et `authHeaderPrefix` (ex: `Bearer ` ou chaîne vide `""`).
-- [ ] **3. Vérifier les noms des clés JSON envoyées :**
-  - Ouvrir `lib/features/screening/data/models/screening_request.dart`.
-  - Si le serveur attend par exemple `first_name` au lieu de `prenom`, adapter la méthode `toJson()`.
-- [ ] **4. Vérifier le nom de la clé de réponse :**
-  - Ouvrir `lib/core/config/api_config.dart`.
-  - Si le texte se trouve dans une clé comme `"diagnostic"` ou `"summary"` au lieu de `"resultat"`, mettre à jour `responseTextKey`.
-- [ ] **5. Vérifier la gestion des codes d'erreurs :**
-  - Ouvrir `lib/features/screening/data/screening_api_service.dart`.
-  - Vérifier si des codes d'erreur HTTP spécifiques (ex: 422 pour image floue) nécessitent un traitement particulier.
+Depuis `depiste_retino/`, après `flutter pub get` :
 
----
+```bash
+flutter run --dart-define=API_BASE_URL=https://<lien-ngrok> --dart-define=API_KEY=<clé>
+```
 
-## 4. Correspondance des erreurs et bannières
+Remplacer les deux valeurs par celles transmises en privé. L'URL et la clé ne
+doivent pas être ajoutées aux fichiers du projet. Une clé d'API embarquée dans
+une application mobile est extractible : `--dart-define` évite de la versionner,
+mais ne la protège pas contre l'extraction depuis l'application compilée.
 
-| Cas rencontré | Erreur interne | Affichage dans l'application | Comportement sur la photo |
-|---|---|---|---|
-| Téléphone en mode avion ou sans réseau | `ScreeningError.noConnection` | Bannière *« Pas de connexion »* | Photo conservée (l'utilisateur peut réessayer) |
-| Serveur inaccessible, échec DNS, timeout réseau | `ScreeningError.serverUnavailable` | Bannière *« Serveur indisponible »* | Photo conservée |
-| Statut HTTP 4xx ou 5xx renvoyé par l'API | `ScreeningError.serverUnavailable` | Bannière *« Serveur indisponible »* | Photo conservée |
-| Corps de réponse non JSON ou clé texte vide | `ScreeningError.serverUnavailable` | Bannière *« Serveur indisponible »* | Photo conservée |
-| Requête non terminée après 60 secondes | `ScreeningError.timeout` | Bannière *« Le délai d'attente est dépassé. Veuillez reprendre la photo. »* | **Photo effacée** (l'utilisateur est redirigé vers le viseur) |
+### Limite connue — code patient
 
----
+Après un redémarrage de l'application, un même patient reçoit un nouveau code,
+donc un nouveau dossier côté backend. Une solution définitive demande une
+décision produit avec l'équipe backend.
 
-## 5. Rappel sur la blockchain et le stockage externe
+## Checklist d'intégration
 
-Conformément au cahier des charges :
-- **L'application mobile n'intègre aucun SDK blockchain, aucun portefeuille, ni aucun contrat intelligent.**
-- Si les bilans de dépistage doivent être ancrés sur un registre décentralisé ou signés cryptographiquement, cette opération est **intégralement réalisée côté serveur par l'API**, en toute transparence pour le client mobile.
+- [ ] Le tunnel ngrok du coéquipier est actif et son URL HTTPS est fournie.
+- [ ] La clé du serveur est transmise en privé et injectée uniquement par
+  `--dart-define=API_KEY=...`.
+- [ ] L'API répond sur `POST /api/v1/mobile/scan`.
+- [ ] Un scan valide avec une image d'œil produit un `patient_message` non vide.
+- [ ] Une image qui n'est pas un œil donne une réponse `200` avec
+  `is_eye: false` et un message utilisateur.
+- [ ] Un service IA indisponible (`503`) est affiché comme « Serveur
+  indisponible ».
+- [ ] Vérifier qu'aucun nom, aucune photo, aucune clé et aucun corps de requête
+  ne sont écrits dans les journaux côté application.
+
+## Gestion des erreurs côté application
+
+| Situation | Erreur interne | Comportement |
+|---|---|---|
+| Terminal sans connexion | `ScreeningError.noConnection` | Photo conservée |
+| Statut HTTP hors 2xx, JSON invalide ou `patient_message` absent/vide | `ScreeningError.serverUnavailable` | Photo conservée |
+| Serveur inaccessible ou erreur réseau | `ScreeningError.serverUnavailable` (ou `noConnection` si le réseau est coupé) | Photo conservée |
+| Échange dépassant 60 secondes | `ScreeningError.timeout` | Photo effacée, nouvelle prise demandée |
+
+La blockchain et le stockage des images restent gérés par le backend ; aucune
+clé ou logique blockchain n'est intégrée à l'application mobile.

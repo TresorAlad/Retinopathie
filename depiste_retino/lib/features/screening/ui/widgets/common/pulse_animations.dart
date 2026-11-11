@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 /// Animation de pulsation d'opacité en boucle (animate-pulse Tailwind).
@@ -27,18 +28,35 @@ class _PulseAnimationState extends State<PulseAnimation>
 
     _animation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.5)
-            .chain(CurveTween(curve: const Cubic(0.4, 0.0, 0.6, 1.0))),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 0.5,
+        ).chain(CurveTween(curve: const Cubic(0.4, 0.0, 0.6, 1.0))),
         weight: 50.0,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.5, end: 1.0)
-            .chain(CurveTween(curve: const Cubic(0.4, 0.0, 0.6, 1.0))),
+        tween: Tween<double>(
+          begin: 0.5,
+          end: 1.0,
+        ).chain(CurveTween(curve: const Cubic(0.4, 0.0, 0.6, 1.0))),
         weight: 50.0,
       ),
     ]).animate(_controller);
+  }
 
-    _controller.repeat();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncAnimation();
+  }
+
+  void _syncAnimation() {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      if (_controller.isAnimating) _controller.stop();
+      if (_controller.value != 0.0) _controller.value = 0.0;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
   }
 
   @override
@@ -53,10 +71,7 @@ class _PulseAnimationState extends State<PulseAnimation>
       return widget.child;
     }
 
-    return FadeTransition(
-      opacity: _animation,
-      child: widget.child,
-    );
+    return FadeTransition(opacity: _animation, child: widget.child);
   }
 }
 
@@ -87,29 +102,40 @@ class _PingAnimationState extends State<PingAnimation>
 
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 2.0)
-            .chain(CurveTween(curve: const Cubic(0.0, 0.0, 0.2, 1.0))),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 2.0,
+        ).chain(CurveTween(curve: const Cubic(0.0, 0.0, 0.2, 1.0))),
         weight: 75.0,
       ),
-      TweenSequenceItem(
-        tween: ConstantTween<double>(2.0),
-        weight: 25.0,
-      ),
+      TweenSequenceItem(tween: ConstantTween<double>(2.0), weight: 25.0),
     ]).animate(_controller);
 
     _opacityAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.75, end: 0.0)
-            .chain(CurveTween(curve: const Cubic(0.0, 0.0, 0.2, 1.0))),
+        tween: Tween<double>(
+          begin: 0.75,
+          end: 0.0,
+        ).chain(CurveTween(curve: const Cubic(0.0, 0.0, 0.2, 1.0))),
         weight: 75.0,
       ),
-      TweenSequenceItem(
-        tween: ConstantTween<double>(0.0),
-        weight: 25.0,
-      ),
+      TweenSequenceItem(tween: ConstantTween<double>(0.0), weight: 25.0),
     ]).animate(_controller);
+  }
 
-    _controller.repeat();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncAnimation();
+  }
+
+  void _syncAnimation() {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      if (_controller.isAnimating) _controller.stop();
+      if (_controller.value != 0.0) _controller.value = 0.0;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
   }
 
   @override
@@ -129,10 +155,7 @@ class _PingAnimationState extends State<PingAnimation>
       builder: (context, child) {
         return Transform.scale(
           scale: _scaleAnimation.value,
-          child: Opacity(
-            opacity: _opacityAnimation.value,
-            child: widget.child,
-          ),
+          child: Opacity(opacity: _opacityAnimation.value, child: widget.child),
         );
       },
     );
@@ -159,7 +182,22 @@ class _SpinAnimationState extends State<SpinAnimation>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
-    )..repeat();
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncAnimation();
+  }
+
+  void _syncAnimation() {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      if (_controller.isAnimating) _controller.stop();
+      if (_controller.value != 0.0) _controller.value = 0.0;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
   }
 
   @override

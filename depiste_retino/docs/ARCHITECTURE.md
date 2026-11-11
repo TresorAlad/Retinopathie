@@ -10,13 +10,13 @@
 L'application est structurée selon une **architecture en couches unidirectionnelle** (3 couches : Data, Logic, UI) centrée autour de l'unique fonctionnalité `screening`.
 - **UI (Présentation) :** Widgets Flutter déclaratifs, sans aucune logique métier, observant l'état via `Provider`.
 - **Logic (Métier / Contrôleur) :** Gestion d'état avec un unique `ChangeNotifier` (`ScreeningController`) et un gestionnaire de matériel caméra (`CameraManager`).
-- **Data (Accès aux données) :** Modèles de transfert JSON et client HTTP (`ScreeningApiService`) avec politique d'expiration de 60s.
+- **Data (Accès aux données) :** Modèles de transfert multipart et client HTTP (`ScreeningApiService`) avec politique d'expiration de 60s.
 
 ```mermaid
 graph TD
     UI[Widgets UI / screening_page.dart] -->|Appels d'actions| Logic[ScreeningController / ChangeNotifier]
     Logic -->|Gestion matérielle| Cam[CameraManager]
-    Logic -->|Appel réseau POST JSON| Data[ScreeningApiService]
+    Logic -->|Appel réseau POST multipart| Data[ScreeningApiService]
     Data -->|HTTP 200 JSON| API[(API Serveur de santé)]
     Data -.->|ScreeningResult / ScreeningError| Logic
     Logic -.->|notifyListeners| UI
@@ -38,15 +38,15 @@ graph TD
 | `lib/core/theme/app_shadows.dart` | Définitions des ombres portées douces (cartes, en-tête, boutons). |
 | `lib/core/theme/app_theme.dart` | Thème `ThemeData` clair Material 3. |
 | `lib/core/utils/validators.dart` | Règles de validation des 4 champs obligatoires (Nom, Prénom, Âge, Sexe). |
-| `lib/core/utils/image_utils.dart` | Décodage, correction EXIF, encodage PNG et Base64 dans des isolates. |
+| `lib/core/utils/image_utils.dart` | Décodage, correction EXIF et encodage PNG dans un isolate. |
 | `lib/core/utils/time_format.dart` | Formatage de la date de réception sans dépendance vers `intl`. |
 | `lib/core/utils/scroll_utils.dart` | Défilement animé vers les blocs en compensant l'en-tête supérieur fixe. |
-| `lib/features/screening/data/models/screening_request.dart` | Modèle de données de la requête HTTP JSON. |
+| `lib/features/screening/data/models/screening_request.dart` | Modèle des champs et du fichier PNG de la requête multipart. |
 | `lib/features/screening/data/models/screening_result.dart` | Modèle encapsulant le texte explicatif et l'heure de réception. |
-| `lib/features/screening/data/screening_error.dart` | Enum des erreurs d'analyse (pas de connexion, serveur indisponible, timeout). |
-| `lib/features/screening/data/screening_api_service.dart` | Appel réseau POST JSON avec timeout de 60s et conversion d'exceptions. |
-| `lib/features/screening/logic/camera_manager.dart` | Cycle de vie caméra, permissions, flash, bascule et capture mémoire. |
-| `lib/features/screening/logic/screening_controller.dart` | État complet de l'écran, validation, requêtes de défilement. |
+| `lib/features/screening/data/screening_error.dart` | Enum des erreurs d'analyse et de capture (pas de connexion, serveur, timeout, capture). |
+| `lib/features/screening/data/screening_api_service.dart` | Appel réseau POST multipart avec timeout de 60s et conversion d'exceptions. |
+| `lib/features/screening/logic/camera_manager.dart` | Cycle de vie caméra, permissions, réinitialisation, flash, bascule et capture mémoire avec exception dédiée. |
+| `lib/features/screening/logic/screening_controller.dart` | État complet de l'écran, validation, code patient de session et requêtes de défilement. |
 | `lib/features/screening/ui/screening_page.dart` | Écran principal défilant assemblant tous les composants visuels. |
 | `lib/features/screening/ui/widgets/app_header.dart` | En-tête fixe avec effet de flou gaussien et titre textuel. |
 | `lib/features/screening/ui/widgets/intro_section.dart` | Titre, paragraphe et badges de réassurance bienveillante. |
@@ -56,11 +56,11 @@ graph TD
 | `lib/features/screening/ui/widgets/viewfinder.dart` | Viseur caméra avec masque sombre, boutons de contrôle et aperçu en direct. |
 | `lib/features/screening/ui/widgets/viewfinder_overlay_painter.dart` | Dessin vectoriel du double repère oculaire et du repère nasal. |
 | `lib/features/screening/ui/widgets/camera_control_button.dart` | Boutons de contrôle (flash et rotation) dans le viseur. |
-| `lib/features/screening/ui/widgets/camera_permission_view.dart` | Vue de secours quand l'accès caméra est refusé avec bouton de réglages. |
+| `lib/features/screening/ui/widgets/camera_permission_view.dart` | Vue de secours avec actions distinctes selon refus de permission ou erreur caméra réessayable. |
 | `lib/features/screening/ui/widgets/shutter_button.dart` | Bouton d'obturation circulaire avec anneau de pulsation tactile. |
 | `lib/features/screening/ui/widgets/preview_card.dart` | Carte d'aperçu de la photo capturée avec boutons Reprendre / Analyser. |
 | `lib/features/screening/ui/widgets/loading_card.dart` | Carte d'attente à 2 étapes affichée pendant l'analyse. |
-| `lib/features/screening/ui/widgets/error_banner.dart` | Bannière d'erreur contextuelle (connexion, serveur, délai). |
+| `lib/features/screening/ui/widgets/error_banner.dart` | Bannière d'erreur contextuelle (connexion, serveur, délai, capture). |
 | `lib/features/screening/ui/widgets/results_section.dart` | Restitution du bilan global avec le texte de l'API. |
 | `lib/features/screening/ui/widgets/disclaimer_card.dart` | Avertissement médical fixe au bas de l'écran. |
 
@@ -121,7 +121,7 @@ sequenceDiagram
         Ctrl-->>UI: fieldErrors mis à jour -> Défilement vers 1er champ invalide
     else Tous les champs sont valides
         Ctrl-->>UI: isSending = true -> Défilement vers LoadingCard
-        Ctrl->>Ctrl: Encodage PNG en Base64 dans un isolate
+        Ctrl->>Ctrl: Préparation des champs et du code patient de session
         Ctrl->>Serv: analyze(ScreeningRequest)
         Serv->>Net: checkConnectivity()
         alt Pas de connectivité Internet
@@ -129,9 +129,9 @@ sequenceDiagram
             Serv-->>Ctrl: throw ScreeningError.noConnection
             Ctrl-->>UI: error = noConnection (bannière affichée, photo conservée)
         else Connecté à Internet
-            Serv->>API: POST /analyze (timeout 60s)
+            Serv->>API: POST /api/v1/mobile/scan en multipart (timeout 60s)
             alt Réponse 2xx avec clé texte
-                API-->>Serv: 200 OK {"resultat": "..."}
+                API-->>Serv: 200 OK {"patient_message": "..."}
                 Serv-->>Ctrl: ScreeningResult(text, now)
                 Ctrl-->>UI: result disponible -> Défilement vers ResultsSection
             else Timeout 60s dépassé
@@ -148,6 +148,19 @@ sequenceDiagram
 ```
 
 ---
+
+### Réinitialisation de la caméra et capture
+
+`CameraManager.retryInitialization()` libère le contrôleur courant puis relance
+le flux normal de vérification des permissions et d'initialisation caméra.
+L'absence de caméra est distinguée d'une erreur réessayable. Une erreur réelle
+de prise de vue ou de conversion PNG lève `CaptureFailedException`; le
+`ScreeningController` la convertit en `ScreeningError.captureFailed`.
+
+Les contrôleurs d'animation répétée de `Viewfinder`, `PulseAnimation`,
+`PingAnimation` et `SpinAnimation` sont arrêtés et remis à zéro lorsque le
+réglage système désactive les animations ; ils redémarrent si ce réglage est
+réactivé.
 
 ## 5. Cycle de vie de la caméra (`CameraManager`)
 
