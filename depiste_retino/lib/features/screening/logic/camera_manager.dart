@@ -149,12 +149,15 @@ class CameraManager with WidgetsBindingObserver {
         return;
       }
 
-      final front = primaryFrontCamera;
-      if (front != null) {
-        _currentCameraIndex = _availableCameras.indexOf(front);
-      } else {
-        _currentCameraIndex = 0;
-      }
+      final back = primaryBackCamera;
+        if (back != null) {
+          _currentCameraIndex = _availableCameras.indexOf(back);
+        } else {
+          final front = primaryFrontCamera;
+            _currentCameraIndex = front != null
+              ? _availableCameras.indexOf(front)
+              : 0;
+        }
 
       await _setupController(_availableCameras[_currentCameraIndex]);
     } catch (e) {
