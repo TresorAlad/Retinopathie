@@ -40,6 +40,12 @@ docker compose up -d --build
 
 `DATABASE_URL` pour Docker est fourni par `docker-compose.yml` (service `db`). Les autres variables viennent de `.env`.
 
+Après une mise à jour du code sur une base Postgres **déjà existante** (volume Docker conservé), appliquer les migrations SQL :
+
+```bash
+docker compose exec api python -m scripts.migrate_db
+```
+
 Créer un médecin ou un patient dans le conteneur :
 
 ```bash

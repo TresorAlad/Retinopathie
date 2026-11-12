@@ -89,6 +89,15 @@ async def mobile_scan(
     request_id = uuid.uuid4().hex
     system_user = ensure_mobile_system_user(db)
 
+    cleaned_code = patient_code.strip()
+    if not cleaned_code:
+        raise HTTPException(status_code=422, detail="patient_code obligatoire.")
+    if len(cleaned_code) > 50:
+        raise HTTPException(status_code=422, detail="patient_code trop long.")
+    validated_first = _validate_patient_field(first_name, "first_name")
+    validated_last = _validate_patient_field(last_name, "last_name")
+    parsed_birth = _parse_birth_date(birth_date)
+
     max_bytes = int(os.getenv("MAX_IMAGE_SIZE_MB", "10")) * 1024 * 1024
     content = await image.read(max_bytes + 1)
     if not content:
@@ -117,15 +126,12 @@ async def mobile_scan(
     filename = uuid.uuid4().hex
     store_encrypted_image(filename, content)
 
-    if len(patient_code.strip()) > 50:
-        raise HTTPException(status_code=422, detail="patient_code trop long.")
-
     patient = _upsert_patient(
         db,
-        patient_code.strip(),
-        _validate_patient_field(first_name, "first_name"),
-        _validate_patient_field(last_name, "last_name"),
-        _parse_birth_date(birth_date),
+        cleaned_code,
+        validated_first,
+        validated_last,
+        parsed_birth,
     )
 
     screening = Screening(
