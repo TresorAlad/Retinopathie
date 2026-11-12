@@ -67,6 +67,15 @@ def _upsert_patient(
     return patient
 
 
+def _validate_patient_field(value: str, field_name: str) -> str:
+    cleaned = value.strip()
+    if not cleaned:
+        raise HTTPException(status_code=422, detail=f"{field_name} obligatoire.")
+    if len(cleaned) > 60:
+        raise HTTPException(status_code=422, detail=f"{field_name} : 60 caractères maximum.")
+    return cleaned
+
+
 @router.post("/scan", response_model=MobileScanResponse)
 async def mobile_scan(
     patient_code: str = Form(...),
@@ -108,11 +117,14 @@ async def mobile_scan(
     filename = uuid.uuid4().hex
     store_encrypted_image(filename, content)
 
+    if len(patient_code.strip()) > 50:
+        raise HTTPException(status_code=422, detail="patient_code trop long.")
+
     patient = _upsert_patient(
         db,
         patient_code.strip(),
-        first_name.strip(),
-        last_name.strip(),
+        _validate_patient_field(first_name, "first_name"),
+        _validate_patient_field(last_name, "last_name"),
         _parse_birth_date(birth_date),
     )
 

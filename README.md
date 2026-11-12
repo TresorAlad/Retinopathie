@@ -2,7 +2,7 @@
 
 Monorepo de dépistage de la rétinopathie diabétique : **backend**, **IA** et **blockchain**.
 
-Les clients **mobile (Flutter)** et **dashboard médecin (React)** ne sont pas développés ici ; ce dépôt expose le serveur et le contrat API pour les équipes concernées.
+Le client **mobile (Flutter)** est sous [`mobile/`](mobile/README.md). Le **dashboard médecin (React)** n’est pas encore dans ce dépôt ; l’API backend sert les deux parcours.
 
 ## Modules
 
@@ -11,6 +11,7 @@ Les clients **mobile (Flutter)** et **dashboard médecin (React)** ne sont pas d
 | [backend/](backend/README.md) | API FastAPI : auth médecin, patients, dépistages, **parcours mobile** (`POST /api/v1/mobile/scan`), explorateur blockchain JWT |
 | [ia/](ia/README.md) | Flask `POST /predict` via **Rodium AI** (vision + agent) |
 | [blockchain/](blockchain/README.md) | Chaîne locale chiffrée, types de blocs dont `mobile_scan` |
+| [mobile/](mobile/README.md) | Application Flutter **Dépiste Retino** (scan + ML Kit on-device) |
 
 ## Flux mobile (côté serveur)
 
@@ -40,7 +41,7 @@ python -m pytest -q
 
 ## Intégration futures équipes
 
-- **Mobile** : `POST /api/v1/mobile/scan` (`multipart/form-data`, clé `MOBILE_API_KEY`), voir [backend/README.md](backend/README.md).
+- **Mobile** : app dans [mobile/depiste_retino](mobile/depiste_retino) ; API `POST /api/v1/mobile/scan`, voir [mobile/depiste_retino/docs/API_INTEGRATION.md](mobile/depiste_retino/docs/API_INTEGRATION.md).
 - **React médecin** : JWT + `GET/POST/PATCH` screenings, `GET /api/v1/blockchain/blocks` pour l'historique des blocs.
 
 Architecture détaillée IA : [ia/Arch_Gen_.md](ia/Arch_Gen_.md).

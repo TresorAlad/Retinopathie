@@ -3,6 +3,21 @@ from tests.test_api import make_png, token_for
 MOBILE_HEADERS = {"X-Mobile-Api-Key": "test-mobile-key"}
 
 
+def test_mobile_scan_rejects_overlong_names(client):
+    long_name = "A" * 61
+    response = client.post(
+        "/api/v1/mobile/scan",
+        headers=MOBILE_HEADERS,
+        data={
+            "patient_code": "M-003",
+            "first_name": long_name,
+            "last_name": "Mobile",
+        },
+        files={"image": ("retina.png", make_png(), "image/png")},
+    )
+    assert response.status_code == 422
+
+
 def test_mobile_scan_requires_api_key(client):
     response = client.post(
         "/api/v1/mobile/scan",
